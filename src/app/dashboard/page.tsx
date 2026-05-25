@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -23,6 +23,7 @@ export default function DashboardPage() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(true);
+  const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -83,6 +84,7 @@ export default function DashboardPage() {
   };
 
   const openEditModal = (client: Client) => {
+    setViewingClient(null);
     setEditingClient(client);
     setFormData({
       deviceId: client.deviceId,
@@ -152,6 +154,7 @@ export default function DashboardPage() {
       try {
         const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
         if (res.ok) {
+          setViewingClient(null);
           loadClients();
         } else {
           const data = await res.json();
@@ -170,6 +173,15 @@ export default function DashboardPage() {
       case 'blocked': return 'bg-red-500/10 text-red-400';
       case 'expired': return 'bg-amber-500/10 text-amber-400';
       default: return 'bg-gray-500/10 text-gray-400';
+    }
+  };
+
+  const getStatusDot = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-emerald-400';
+      case 'blocked': return 'bg-red-400';
+      case 'expired': return 'bg-amber-400';
+      default: return 'bg-gray-400';
     }
   };
 
@@ -236,9 +248,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>
-                JR STREAMING
+                Painel JR
               </button>
-              <p className="text-xs text-gray-400">Painel</p>
+              <p className="text-xs text-gray-400">Streaming</p>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
@@ -359,8 +371,8 @@ export default function DashboardPage() {
                   <thead>
                     <tr className={`border-b ${borderColor}`}>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Nome</th>
-                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Device ID</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden sm:table-cell`}>Usuário</th>
+                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Device ID</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Status</th>
@@ -369,23 +381,27 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {filteredClients.map((client) => (
-                      <tr key={client.id} className={`border-b ${borderColor} ${hoverBg} transition-colors`}>
+                      <tr 
+                        key={client.id} 
+                        className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`}
+                        onClick={() => setViewingClient(client)}
+                      >
                         <td className={`p-3 lg:p-4 ${textColor}`}>
                           <span className="font-medium">{client.name}</span>
                           <p className={`text-xs ${textGray} sm:hidden`}>{client.username}</p>
                         </td>
-                        <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>{client.deviceId}</td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden sm:table-cell`}>{client.username}</td>
+                        <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>{client.deviceId}</td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono`}>{client.mac}</td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden xl:table-cell`}>
                           {new Date(client.validade).toLocaleDateString('pt-BR')}
                         </td>
-                        <td className="p-3 lg:p-4 hidden md:table-cell">
+                        <td className="p-3 lg:p-4 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
                             {getStatusText(client.status)}
                           </span>
                         </td>
-                        <td className="p-3 lg:p-4">
+                        <td className="p-3 lg:p-4" onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-1 lg:gap-2">
                             <button
                               onClick={() => toggleStatus(client)}
@@ -424,7 +440,113 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Modal */}
+      {/* Card de Visualização do Cliente */}
+      {viewingClient && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setViewingClient(null)}>
+          <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-md overflow-hidden shadow-2xl`} onClick={(e) => e.stopPropagation()}>
+            {/* Header do Card */}
+            <div className={`p-6 border-b ${borderColor} flex items-center justify-between`}>
+              <div className="flex items-center gap-3">
+                <div className={`w-3 h-3 rounded-full ${getStatusDot(viewingClient.status)} animate-pulse`} />
+                <h3 className={`text-lg font-semibold ${textColor}`}>{viewingClient.name}</h3>
+              </div>
+              <button
+                onClick={() => setViewingClient(null)}
+                className={`p-1.5 rounded-lg ${hoverBg} ${textGray} hover:text-red-400 transition-colors`}
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+
+            {/* Corpo do Card */}
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-blue-500/10`}>
+                  <Smartphone size={18} className="text-blue-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Device ID</p>
+                  <p className={`text-sm font-mono ${textColor}`}>{viewingClient.deviceId}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-purple-500/10`}>
+                  <Monitor size={18} className="text-purple-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>MAC Address</p>
+                  <p className={`text-sm font-mono ${textColor}`}>{viewingClient.mac || '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-emerald-500/10`}>
+                  <Wifi size={18} className="text-emerald-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Usuário / Senha</p>
+                  <p className={`text-sm ${textColor}`}>{viewingClient.username} / {viewingClient.password}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-amber-500/10`}>
+                  <Calendar size={18} className="text-amber-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Validade</p>
+                  <p className={`text-sm ${textColor}`}>{new Date(viewingClient.validade).toLocaleDateString('pt-BR')}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-rose-500/10`}>
+                  <Phone size={18} className="text-rose-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Contato</p>
+                  <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}>
+                  <div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Status</p>
+                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>
+                    {getStatusText(viewingClient.status)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Rodapé do Card */}
+            <div className={`p-4 border-t ${borderColor} flex gap-3`}>
+              <button
+                onClick={() => {
+                  openEditModal(viewingClient);
+                }}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"
+              >
+                <Pencil size={16} />
+                Editar
+              </button>
+              <button
+                onClick={() => setViewingClient(null)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}
+              >
+                <XCircle size={16} />
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição/Criação */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className={`${cardBg} rounded-xl border ${borderColor} w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
