@@ -47,7 +47,7 @@ export default function LoginPage() {
           <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-600/20">
             <Play size={28} className="text-white" fill="white" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">Painel JR Streaming</h1>
+          <h1 className="text-2xl font-bold text-white mb-1">PAINEL JR STREAMING</h1>
           <p className="text-gray-400 text-sm">Faça login para acessar o painel</p>
         </div>
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-              placeholder="admin@iptv.com"
+              placeholder="Digite seu usuario de Admin"
               required
             />
           </div>
@@ -76,7 +76,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
-                placeholder="••••••••"
+                placeholder="Digite sua senha de Admin"
                 required
               />
               <button
