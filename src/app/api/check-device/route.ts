@@ -50,7 +50,8 @@ export async function GET(request: NextRequest) {
         password: client.password,
         validade: client.validade,
         status: client.status,
-        name: client.name
+        name: client.name,
+        mac: client.mac
       }
     });
 
