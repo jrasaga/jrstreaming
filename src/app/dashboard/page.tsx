@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe } from 'lucide-react';
 
 interface Client {
   id: string;
   deviceId: string;
   name: string;
   mac: string;
+  serverUrl: string;
   username: string;
   password: string;
   status: string;
@@ -30,6 +31,7 @@ export default function DashboardPage() {
     deviceId: '',
     name: '',
     mac: '',
+    serverUrl: '',
     username: '',
     password: '',
     status: 'active',
@@ -74,6 +76,7 @@ export default function DashboardPage() {
       deviceId: '',
       name: '',
       mac: '',
+      serverUrl: '',
       username: '',
       password: '',
       status: 'active',
@@ -90,6 +93,7 @@ export default function DashboardPage() {
       deviceId: client.deviceId,
       name: client.name,
       mac: client.mac,
+      serverUrl: client.serverUrl || '',
       username: client.username,
       password: client.password,
       status: client.status,
@@ -135,6 +139,7 @@ export default function DashboardPage() {
           deviceId: client.deviceId,
           name: client.name,
           mac: client.mac,
+          serverUrl: client.serverUrl,
           username: client.username,
           password: client.password,
           status: newStatus,
@@ -233,7 +238,6 @@ export default function DashboardPage() {
         />
       )}
 
-      {/* Sidebar */}
       <div className={`
         fixed lg:static inset-y-0 left-0 z-30
         w-64 ${sidebarBg} border-r ${borderColor}
@@ -290,7 +294,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="flex-1 flex flex-col min-h-screen">
-        {/* Header */}
         <header className={`${headerBg} border-b ${borderColor} p-4`}>
           <div className="flex items-center justify-between">
             <button
@@ -304,9 +307,7 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Content */}
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          {/* Stats Grid */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
             {stats.map((stat, index) => (
               <div
@@ -326,7 +327,6 @@ export default function DashboardPage() {
             ))}
           </div>
 
-          {/* Clients Table */}
           <div className={`${cardBg} rounded-xl border ${borderColor}`}>
             <div className="p-4 lg:p-6 border-b border-gray-700">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
@@ -444,7 +444,6 @@ export default function DashboardPage() {
       {viewingClient && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setViewingClient(null)}>
           <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-md overflow-hidden shadow-2xl`} onClick={(e) => e.stopPropagation()}>
-            {/* Header do Card */}
             <div className={`p-6 border-b ${borderColor} flex items-center justify-between`}>
               <div className="flex items-center gap-3">
                 <div className={`w-3 h-3 rounded-full ${getStatusDot(viewingClient.status)} animate-pulse`} />
@@ -458,7 +457,6 @@ export default function DashboardPage() {
               </button>
             </div>
 
-            {/* Corpo do Card */}
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg bg-blue-500/10`}>
@@ -477,6 +475,16 @@ export default function DashboardPage() {
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>MAC Address</p>
                   <p className={`text-sm font-mono ${textColor}`}>{viewingClient.mac || '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-cyan-500/10`}>
+                  <Globe size={18} className="text-cyan-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>URL do Servidor</p>
+                  <p className={`text-sm ${textColor}`}>{viewingClient.serverUrl || '—'}</p>
                 </div>
               </div>
 
@@ -523,7 +531,6 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Rodapé do Card */}
             <div className={`p-4 border-t ${borderColor} flex gap-3`}>
               <button
                 onClick={() => {
@@ -587,6 +594,17 @@ export default function DashboardPage() {
                   onChange={(e) => setFormData({ ...formData, mac: e.target.value })}
                   className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
                   placeholder="00:00:00:00:00:00"
+                />
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${textGray} mb-1`}>URL do Servidor</label>
+                <input
+                  type="text"
+                  value={formData.serverUrl}
+                  onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
+                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
+                  placeholder="http://exemplo.com:8080"
                 />
               </div>
 
