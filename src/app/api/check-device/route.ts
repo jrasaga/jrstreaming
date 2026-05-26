@@ -51,7 +51,8 @@ export async function GET(request: NextRequest) {
         validade: client.validade,
         status: client.status,
         name: client.name,
-        mac: client.mac
+        mac: client.mac,
+        serverUrl: client.serverUrl || ''
       }
     });
 
