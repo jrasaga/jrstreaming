@@ -19,17 +19,18 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { deviceId, name, mac, username, password, status, validade, contato } = body;
+    const { deviceId, name, mac, serverUrl, username, password, status, validade, contato } = body;
 
     const docRef = await db.collection('clients').add({
       deviceId,
       name,
       mac,
+      serverUrl: serverUrl || '',
       username,
       password,
       status: status || 'active',
       validade,
-      contato,
+      contato: contato || '',
       createdAt: new Date(),
       updatedAt: new Date()
     });
