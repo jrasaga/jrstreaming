@@ -52,7 +52,8 @@ export async function GET(request: NextRequest) {
         status: client.status,
         name: client.name,
         mac: client.mac,
-        serverUrl: client.serverUrl || ''
+        serverUrl: client.serverUrl || '',
+        userAgent: client.userAgent || ''
       }
     });
 
