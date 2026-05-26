@@ -257,9 +257,9 @@ export default function DashboardPage() {
             </div>
             <div>
               <button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>
-                Painel JR
+                JR STREAMING
               </button>
-              <p className="text-xs text-gray-400">Streaming</p>
+              <p className="text-xs text-gray-400">Painel</p>
             </div>
             <button
               onClick={() => setSidebarOpen(false)}
