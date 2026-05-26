@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -12,6 +12,7 @@ interface Client {
   serverUrl: string;
   username: string;
   password: string;
+  userAgent: string;
   status: string;
   validade: string;
   contato: string;
@@ -34,6 +35,7 @@ export default function DashboardPage() {
     serverUrl: '',
     username: '',
     password: '',
+    userAgent: '',
     status: 'active',
     validade: '',
     contato: ''
@@ -79,6 +81,7 @@ export default function DashboardPage() {
       serverUrl: '',
       username: '',
       password: '',
+      userAgent: '',
       status: 'active',
       validade: '',
       contato: ''
@@ -96,6 +99,7 @@ export default function DashboardPage() {
       serverUrl: client.serverUrl || '',
       username: client.username,
       password: client.password,
+      userAgent: client.userAgent || '',
       status: client.status,
       validade: client.validade,
       contato: client.contato
@@ -142,6 +146,7 @@ export default function DashboardPage() {
           serverUrl: client.serverUrl,
           username: client.username,
           password: client.password,
+          userAgent: client.userAgent,
           status: newStatus,
           validade: client.validade,
           contato: client.contato
@@ -459,7 +464,7 @@ export default function DashboardPage() {
 
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-blue-500/10`}>
+                <div className="p-2 rounded-lg bg-blue-500/10">
                   <Smartphone size={18} className="text-blue-400" />
                 </div>
                 <div className="flex-1">
@@ -469,7 +474,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-purple-500/10`}>
+                <div className="p-2 rounded-lg bg-purple-500/10">
                   <Monitor size={18} className="text-purple-400" />
                 </div>
                 <div className="flex-1">
@@ -479,17 +484,17 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-cyan-500/10`}>
+                <div className="p-2 rounded-lg bg-cyan-500/10">
                   <Globe size={18} className="text-cyan-400" />
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>URL do Servidor</p>
-                  <p className={`text-sm ${textColor}`}>{viewingClient.serverUrl || '—'}</p>
+                  <p className={`text-sm ${textColor} break-all`}>{viewingClient.serverUrl || '—'}</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-emerald-500/10`}>
+                <div className="p-2 rounded-lg bg-emerald-500/10">
                   <Wifi size={18} className="text-emerald-400" />
                 </div>
                 <div className="flex-1">
@@ -499,7 +504,17 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-amber-500/10`}>
+                <div className="p-2 rounded-lg bg-indigo-500/10">
+                  <MonitorSmartphone size={18} className="text-indigo-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>User-Agent</p>
+                  <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
                   <Calendar size={18} className="text-amber-400" />
                 </div>
                 <div className="flex-1">
@@ -509,7 +524,7 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-rose-500/10`}>
+                <div className="p-2 rounded-lg bg-rose-500/10">
                   <Phone size={18} className="text-rose-400" />
                 </div>
                 <div className="flex-1">
@@ -533,9 +548,7 @@ export default function DashboardPage() {
 
             <div className={`p-4 border-t ${borderColor} flex gap-3`}>
               <button
-                onClick={() => {
-                  openEditModal(viewingClient);
-                }}
+                onClick={() => openEditModal(viewingClient)}
                 className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"
               >
                 <Pencil size={16} />
@@ -630,6 +643,17 @@ export default function DashboardPage() {
                     required
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label>
+                <input
+                  type="text"
+                  value={formData.userAgent}
+                  onChange={(e) => setFormData({ ...formData, userAgent: e.target.value })}
+                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
+                  placeholder="Ex: Mozilla/5.0..."
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
