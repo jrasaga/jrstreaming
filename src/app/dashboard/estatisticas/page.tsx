@@ -48,16 +48,24 @@ export default function EstatisticasPage() {
   const expiredPercent = (expiredClients / total) * 100;
 
   const clientsByMonth = () => {
-    const months: Record<string, number> = {};
-    clients.forEach(client => {
-      if (client.createdAt) {
-        const date = new Date(client.createdAt);
+  const months: Record<string, number> = {};
+  clients.forEach(client => {
+    if (client.createdAt) {
+      let date: Date;
+      // Verificar se é timestamp do Firebase (objeto com _seconds)
+      if (typeof client.createdAt === 'object' && client.createdAt._seconds) {
+        date = new Date(client.createdAt._seconds * 1000);
+      } else {
+        date = new Date(client.createdAt);
+      }
+      if (!isNaN(date.getTime())) {
         const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
         months[key] = (months[key] || 0) + 1;
       }
-    });
-    return Object.entries(months).sort().slice(-6);
-  };
+    }
+  });
+  return Object.entries(months).sort().slice(-6);
+};
 
   const monthData = clientsByMonth();
   const maxMonthValue = Math.max(...monthData.map(([, v]) => v), 1);
