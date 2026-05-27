@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2 } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -56,6 +56,31 @@ export default function DashboardPage() {
     setTimeout(() => {
       container.remove();
     }, 3000);
+  };
+
+  const exportToCSV = () => {
+    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato'];
+    
+    const csvData = clients.map(client => [
+      client.name,
+      client.username,
+      client.password,
+      client.deviceId,
+      client.mac,
+      client.serverUrl,
+      client.userAgent,
+      client.status === 'active' ? 'Ativo' : client.status === 'blocked' ? 'Bloqueado' : 'Expirado',
+      client.validade,
+      client.contato
+    ]);
+    
+    const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    showToast('Clientes exportados!');
   };
 
   useEffect(() => {
@@ -372,6 +397,13 @@ export default function DashboardPage() {
                       className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} border ${inputBorder} rounded-xl ${textColor} placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
                     />
                   </div>
+                  <button
+                    onClick={exportToCSV}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                    title="Exportar CSV"
+                  >
+                    <Download size={18} />
+                  </button>
                   <button
                     onClick={() => setFullscreen(!fullscreen)}
                     className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
