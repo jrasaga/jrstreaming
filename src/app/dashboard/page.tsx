@@ -28,6 +28,7 @@ export default function DashboardPage() {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [deleteModal, setDeleteModal] = useState<Client | null>(null);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -93,26 +94,26 @@ export default function DashboardPage() {
   };
 
   const getExpiryInfo = (validade: string, status: string) => {
-  if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
-  
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const expiry = new Date(validade + 'T00:00:00');
-  
-  if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
-  
-  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (status === 'expired' || diffDays < 0) {
-    return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
-  } else if (diffDays === 0) {
-    return { text: 'Expira hoje', color: 'text-amber-400' };
-  } else if (diffDays <= 7) {
-    return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
-  } else {
-    return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
-  }
-};
+    if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(validade + 'T00:00:00');
+    
+    if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
+    
+    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (status === 'expired' || diffDays < 0) {
+      return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
+    } else if (diffDays === 0) {
+      return { text: 'Expira hoje', color: 'text-amber-400' };
+    } else if (diffDays <= 7) {
+      return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
+    } else {
+      return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
+    }
+  };
 
   useEffect(() => {
     const logged = localStorage.getItem('admin_logged');
@@ -234,22 +235,25 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm('Tem certeza que deseja excluir este cliente?')) {
-      try {
-        const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
-        if (res.ok) {
-          setViewingClient(null);
-          showToast('Cliente excluído!');
-          loadClients();
-        } else {
-          showToast('Erro ao excluir cliente', 'error');
-        }
-      } catch (error) {
-        showToast('Erro ao excluir cliente', 'error');
+  const handleDelete = (client: Client) => {
+    setDeleteModal(client);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteModal) return;
+    try {
+      const res = await fetch(`/api/clients/${deleteModal.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setViewingClient(null);
+        showToast('Cliente excluído!');
         loadClients();
+      } else {
+        showToast('Erro ao excluir cliente', 'error');
       }
+    } catch (error) {
+      showToast('Erro ao excluir cliente', 'error');
     }
+    setDeleteModal(null);
   };
 
   const getStatusColor = (status: string) => {
@@ -557,7 +561,7 @@ export default function DashboardPage() {
                               <Pencil size={16} />
                             </button>
                             <button
-                              onClick={() => handleDelete(client.id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(client); }}
                               className="p-1.5 lg:p-2 text-red-400 hover:bg-red-400/10 rounded-lg"
                               title="Excluir"
                             >
@@ -653,21 +657,21 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-  <div className="p-2 rounded-lg bg-indigo-500/10">
-    <MonitorSmartphone size={18} className="text-indigo-400" />
-  </div>
-  <div className="flex-1">
-    <p className={`text-xs ${textGray}`}>User-Agent</p>
-    <div className="flex items-center gap-2">
-      <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
-      {viewingClient.userAgent && (
-        <button onClick={() => copyToClipboard(viewingClient.userAgent, 'view-useragent')} className="text-gray-400 hover:text-white flex-shrink-0">
-          {copiedField === 'view-useragent' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
+                <div className="p-2 rounded-lg bg-indigo-500/10">
+                  <MonitorSmartphone size={18} className="text-indigo-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>User-Agent</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
+                    {viewingClient.userAgent && (
+                      <button onClick={() => copyToClipboard(viewingClient.userAgent, 'view-useragent')} className="text-gray-400 hover:text-white flex-shrink-0">
+                        {copiedField === 'view-useragent' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-amber-500/10">
@@ -680,21 +684,21 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-  <div className="p-2 rounded-lg bg-rose-500/10">
-    <Phone size={18} className="text-rose-400" />
-  </div>
-  <div className="flex-1">
-    <p className={`text-xs ${textGray}`}>Contato</p>
-    <div className="flex items-center gap-2">
-      <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
-      {viewingClient.contato && (
-        <button onClick={() => copyToClipboard(viewingClient.contato, 'view-contato')} className="text-gray-400 hover:text-white flex-shrink-0">
-          {copiedField === 'view-contato' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-        </button>
-      )}
-    </div>
-  </div>
-</div>
+                <div className="p-2 rounded-lg bg-rose-500/10">
+                  <Phone size={18} className="text-rose-400" />
+                </div>
+                <div className="flex-1">
+                  <p className={`text-xs ${textGray}`}>Contato</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
+                    {viewingClient.contato && (
+                      <button onClick={() => copyToClipboard(viewingClient.contato, 'view-contato')} className="text-gray-400 hover:text-white flex-shrink-0">
+                        {copiedField === 'view-contato' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}>
@@ -723,6 +727,37 @@ export default function DashboardPage() {
               >
                 <XCircle size={16} />
                 Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Exclusão */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-sm p-6 shadow-2xl`}>
+            <div className="text-center">
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 size={24} className="text-red-400" />
+              </div>
+              <h3 className={`text-lg font-semibold ${textColor} mb-2`}>Excluir Cliente</h3>
+              <p className={`text-sm ${textGray} mb-6`}>
+                Tem certeza que deseja excluir <strong className={textColor}>{deleteModal.name}</strong>? Esta ação não pode ser desfeita.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteModal(null)}
+                className={`flex-1 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
+              >
+                Excluir
               </button>
             </div>
           </div>
