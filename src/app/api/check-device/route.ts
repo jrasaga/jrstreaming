@@ -42,6 +42,11 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Atualizar último acesso
+    await db.collection('clients').doc(docId).update({
+      lastSeen: new Date()
+    });
+
     return NextResponse.json({
       exists: true,
       status: client.status,
