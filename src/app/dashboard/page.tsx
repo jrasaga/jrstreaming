@@ -139,12 +139,12 @@ export default function DashboardPage() {
       name: client.name,
       mac: client.mac,
       serverUrl: client.serverUrl || '',
-      username: client.username,
-      password: client.password,
+      username: client.username || '',
+      password: client.password || '',
       userAgent: client.userAgent || '',
       status: client.status,
       validade: client.validade,
-      contato: client.contato
+      contato: client.contato || ''
     });
     setModalOpen(true);
   };
@@ -570,7 +570,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>Usuário / Senha</p>
-                  <p className={`text-sm ${textColor}`}>{viewingClient.username} / {viewingClient.password}</p>
+                  <p className={`text-sm ${textColor}`}>{viewingClient.username || '—'} / {viewingClient.password || '—'}</p>
                 </div>
               </div>
 
@@ -700,7 +700,6 @@ export default function DashboardPage() {
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                    required
                   />
                 </div>
 
@@ -711,7 +710,6 @@ export default function DashboardPage() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                    required
                   />
                 </div>
               </div>
