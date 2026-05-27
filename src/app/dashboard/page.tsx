@@ -41,6 +41,22 @@ export default function DashboardPage() {
     contato: ''
   });
 
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    const container = document.createElement('div');
+    container.className = 'toast-container';
+    
+    const toastEl = document.createElement('div');
+    toastEl.className = `toast ${type}`;
+    toastEl.textContent = message;
+    
+    container.appendChild(toastEl);
+    document.body.appendChild(container);
+    
+    setTimeout(() => {
+      container.remove();
+    }, 3000);
+  };
+
   useEffect(() => {
     const logged = localStorage.getItem('admin_logged');
     if (!logged) {
@@ -117,6 +133,7 @@ export default function DashboardPage() {
           body: JSON.stringify(formData)
         });
         if (!res.ok) throw new Error('Erro ao atualizar');
+        showToast('Cliente atualizado!');
       } else {
         const res = await fetch('/api/clients', {
           method: 'POST',
@@ -124,12 +141,12 @@ export default function DashboardPage() {
           body: JSON.stringify(formData)
         });
         if (!res.ok) throw new Error('Erro ao criar');
+        showToast('Cliente criado!');
       }
       setModalOpen(false);
       loadClients();
     } catch (error) {
-      console.error('Erro ao salvar cliente:', error);
-      alert('Erro ao salvar cliente');
+      showToast('Erro ao salvar cliente', 'error');
     }
   };
 
@@ -153,9 +170,10 @@ export default function DashboardPage() {
         })
       });
       if (!res.ok) throw new Error('Erro ao atualizar status');
+      showToast(`Cliente ${newStatus === 'active' ? 'ativado' : 'bloqueado'}!`);
       loadClients();
     } catch (error) {
-      console.error('Erro ao alternar status:', error);
+      showToast('Erro ao alterar status', 'error');
     }
   };
 
@@ -165,13 +183,13 @@ export default function DashboardPage() {
         const res = await fetch(`/api/clients/${id}`, { method: 'DELETE' });
         if (res.ok) {
           setViewingClient(null);
+          showToast('Cliente excluído!');
           loadClients();
         } else {
-          const data = await res.json();
-          alert(data.error || 'Erro ao excluir cliente');
+          showToast('Erro ao excluir cliente', 'error');
         }
       } catch (error) {
-        console.error('Erro ao excluir cliente:', error);
+        showToast('Erro ao excluir cliente', 'error');
         loadClients();
       }
     }
