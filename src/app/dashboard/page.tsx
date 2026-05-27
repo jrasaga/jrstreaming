@@ -16,6 +16,7 @@ interface Client {
   status: string;
   validade: string;
   contato: string;
+  lastSeen: string;
 }
 
 export default function DashboardPage() {
@@ -71,8 +72,30 @@ export default function DashboardPage() {
     });
   };
 
+  const isOnline = (lastSeen: string) => {
+    if (!lastSeen) return false;
+    const last = new Date(lastSeen);
+    const now = new Date();
+    const diffMinutes = (now.getTime() - last.getTime()) / (1000 * 60);
+    return diffMinutes < 5;
+  };
+
+  const getLastSeenText = (lastSeen: string) => {
+    if (!lastSeen) return 'Nunca';
+    const last = new Date(lastSeen);
+    const now = new Date();
+    const diffMinutes = Math.floor((now.getTime() - last.getTime()) / (1000 * 60));
+    
+    if (diffMinutes < 1) return 'Agora';
+    if (diffMinutes < 60) return `Há ${diffMinutes} min`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `Há ${diffHours}h`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `Há ${diffDays} dias`;
+  };
+
   const exportToCSV = () => {
-    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato'];
+    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Último Acesso'];
     
     const csvData = clients.map(client => [
       client.name,
@@ -84,7 +107,8 @@ export default function DashboardPage() {
       client.userAgent,
       client.status === 'active' ? 'Ativo' : client.status === 'blocked' ? 'Bloqueado' : 'Expirado',
       client.validade,
-      client.contato
+      client.contato,
+      getLastSeenText(client.lastSeen)
     ]);
     
     const csvContent = [headers, ...csvData].map(row => row.join(',')).join('\n');
@@ -536,6 +560,7 @@ export default function DashboardPage() {
                           {sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}
                         </div>
                       </th>
+                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>Online</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                     </tr>
                   </thead>
@@ -586,6 +611,12 @@ export default function DashboardPage() {
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
                             {getStatusText(client.status)}
                           </span>
+                        </td>
+                        <td className="p-3 lg:p-4 hidden lg:table-cell" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${isOnline(client.lastSeen) ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`}></div>
+                            <span className={`text-xs ${textGray}`}>{getLastSeenText(client.lastSeen)}</span>
+                          </div>
                         </td>
                         <td className="p-3 lg:p-4" onClick={(e) => e.stopPropagation()}>
                           <div className="flex gap-1 lg:gap-2">
