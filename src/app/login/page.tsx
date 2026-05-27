@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Tv } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -51,15 +51,23 @@ export default function LoginPage() {
 
       <div className="bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 w-full max-w-md border border-gray-700/50 relative z-10">
         <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-600/30 relative transform rotate-3 hover:rotate-0 transition-transform duration-300">
-              <span className="text-white font-bold text-3xl italic tracking-tighter">JR</span>
+          {/* Logo Moderna */}
+          <div className="relative inline-flex items-center justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur-xl opacity-50"></div>
+              <div className="relative bg-gray-900 border border-gray-700/50 rounded-2xl px-6 py-3 flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <Tv size={22} className="text-white" />
+                </div>
+                <div className="text-left">
+                  <span className="text-white font-bold text-xl tracking-tight">JR</span>
+                  <span className="text-gray-400 text-xs block -mt-1">Streaming</span>
+                </div>
+              </div>
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-400 rounded-full animate-pulse"></div>
             </div>
-            <Sparkles size={16} className="text-yellow-300 absolute -top-1 -right-1" />
           </div>
-          <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-            Painel <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">JR</span>
-          </h1>
+          
           <p className="text-gray-400 text-sm">Faça login para acessar o painel</p>
         </div>
 
@@ -102,7 +110,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 animate-shake">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3">
               <p className="text-red-400 text-sm text-center">{error}</p>
             </div>
           )}
