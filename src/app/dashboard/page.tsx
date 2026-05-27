@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3 } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const [darkMode, setDarkMode] = useState(true);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -56,6 +57,14 @@ export default function DashboardPage() {
     setTimeout(() => {
       container.remove();
     }, 3000);
+  };
+
+  const copyToClipboard = (text: string, field: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      showToast('Copiado!');
+      setTimeout(() => setCopiedField(null), 2000);
+    });
   };
 
   const exportToCSV = () => {
@@ -485,8 +494,28 @@ export default function DashboardPage() {
                           <p className={`text-xs ${textGray} sm:hidden`}>{client.username}</p>
                         </td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden sm:table-cell`}>{client.username}</td>
-                        <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>{client.deviceId}</td>
-                        <td className={`p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono`}>{client.mac}</td>
+                        <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>
+                          <div className="flex items-center gap-2">
+                            <span>{client.deviceId}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); copyToClipboard(client.deviceId, `device-${client.id}`); }}
+                              className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === `device-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
+                            </button>
+                          </div>
+                        </td>
+                        <td className={`p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono`}>
+                          <div className="flex items-center gap-2">
+                            <span>{client.mac}</span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); copyToClipboard(client.mac, `mac-${client.id}`); }}
+                              className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
+                            >
+                              {copiedField === `mac-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
+                            </button>
+                          </div>
+                        </td>
                         <td className={`p-3 lg:p-4 hidden xl:table-cell`}>
                           {(() => {
                             const info = getExpiryInfo(client.validade, client.status);
@@ -566,7 +595,12 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>Device ID</p>
-                  <p className={`text-sm font-mono ${textColor}`}>{viewingClient.deviceId}</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-mono ${textColor}`}>{viewingClient.deviceId}</p>
+                    <button onClick={() => copyToClipboard(viewingClient.deviceId, 'view-device')} className="text-gray-400 hover:text-white">
+                      {copiedField === 'view-device' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -576,7 +610,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>MAC Address</p>
-                  <p className={`text-sm font-mono ${textColor}`}>{viewingClient.mac || '—'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm font-mono ${textColor}`}>{viewingClient.mac || '—'}</p>
+                    {viewingClient.mac && (
+                      <button onClick={() => copyToClipboard(viewingClient.mac, 'view-mac')} className="text-gray-400 hover:text-white">
+                        {copiedField === 'view-mac' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -586,7 +627,14 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>URL do Servidor</p>
-                  <p className={`text-sm ${textColor} break-all`}>{viewingClient.serverUrl || '—'}</p>
+                  <div className="flex items-center gap-2">
+                    <p className={`text-sm ${textColor} break-all`}>{viewingClient.serverUrl || '—'}</p>
+                    {viewingClient.serverUrl && (
+                      <button onClick={() => copyToClipboard(viewingClient.serverUrl, 'view-url')} className="text-gray-400 hover:text-white flex-shrink-0">
+                        {copiedField === 'view-url' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
 
