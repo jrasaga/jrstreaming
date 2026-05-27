@@ -24,6 +24,7 @@ export default function DashboardPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [darkMode, setDarkMode] = useState(true);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -283,13 +284,18 @@ export default function DashboardPage() {
     }
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.mac.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.contato.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredClients = clients.filter(client => {
+    const matchesSearch = 
+      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.mac.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.contato.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   const activeClients = clients.filter(c => c.status === 'active').length;
   const blockedClients = clients.filter(c => c.status === 'blocked').length;
@@ -426,40 +432,49 @@ export default function DashboardPage() {
 
           <div className={`${cardBg} rounded-xl border ${borderColor} ${fullscreen ? 'fixed inset-0 z-50 overflow-auto rounded-none' : ''}`}>
             <div className="p-4 lg:p-6 border-b border-gray-700">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-                <h3 className={`text-lg font-semibold ${textColor}`}>Clientes</h3>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="relative">
-                    <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textGray}`} />
-                    <input
-                      type="text"
-                      placeholder="Buscar cliente..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} border ${inputBorder} rounded-xl ${textColor} placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
-                    />
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+                  <h3 className={`text-lg font-semibold ${textColor}`}>Clientes</h3>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <div className="relative">
+                      <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textGray}`} />
+                      <input
+                        type="text"
+                        placeholder="Buscar cliente..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} border ${inputBorder} rounded-xl ${textColor} placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
+                      />
+                    </div>
+                    <button
+                      onClick={exportToCSV}
+                      className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                      title="Exportar CSV"
+                    >
+                      <Download size={18} />
+                    </button>
+                    <button
+                      onClick={() => setFullscreen(!fullscreen)}
+                      className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                      title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                    >
+                      {fullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                    </button>
+                    <button
+                      onClick={openNewModal}
+                      className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap"
+                    >
+                      <Plus size={18} />
+                      <span className="hidden sm:inline">Novo Cliente</span>
+                    </button>
                   </div>
-                  <button
-                    onClick={exportToCSV}
-                    className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
-                    title="Exportar CSV"
-                  >
-                    <Download size={18} />
-                  </button>
-                  <button
-                    onClick={() => setFullscreen(!fullscreen)}
-                    className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
-                    title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
-                  >
-                    {fullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-                  </button>
-                  <button
-                    onClick={openNewModal}
-                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap"
-                  >
-                    <Plus size={18} />
-                    <span className="hidden sm:inline">Novo Cliente</span>
-                  </button>
+                </div>
+                
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => setStatusFilter('all')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Todos</button>
+                  <button onClick={() => setStatusFilter('active')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === 'active' ? 'bg-emerald-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Ativos</button>
+                  <button onClick={() => setStatusFilter('blocked')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === 'blocked' ? 'bg-red-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Bloqueados</button>
+                  <button onClick={() => setStatusFilter('expired')} className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${statusFilter === 'expired' ? 'bg-amber-600 text-white' : 'bg-gray-700 text-gray-300 hover:bg-gray-600'}`}>Expirados</button>
                 </div>
               </div>
             </div>
@@ -507,7 +522,6 @@ export default function DashboardPage() {
                             <span>{client.deviceId}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); copyToClipboard(client.deviceId, `device-${client.id}`); }}
-                              className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
                             >
                               {copiedField === `device-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
                             </button>
@@ -518,7 +532,6 @@ export default function DashboardPage() {
                             <span>{client.mac}</span>
                             <button
                               onClick={(e) => { e.stopPropagation(); copyToClipboard(client.mac, `mac-${client.id}`); }}
-                              className="opacity-0 group-hover:opacity-100 hover:opacity-100 transition-opacity"
                             >
                               {copiedField === `mac-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
                             </button>
