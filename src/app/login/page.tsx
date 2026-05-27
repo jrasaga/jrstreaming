@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Play, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Sparkles } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -52,13 +52,13 @@ export default function LoginPage() {
       <div className="bg-gray-800/80 backdrop-blur-xl rounded-3xl shadow-2xl p-8 w-full max-w-md border border-gray-700/50 relative z-10">
         <div className="text-center mb-8">
           <div className="relative inline-block">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-600/30 relative">
-              <Play size={34} className="text-white" fill="white" />
-              <Sparkles size={16} className="text-yellow-300 absolute -top-1 -right-1" />
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl shadow-blue-600/30 relative transform rotate-3 hover:rotate-0 transition-transform duration-300">
+              <span className="text-white font-bold text-3xl italic tracking-tighter">JR</span>
             </div>
+            <Sparkles size={16} className="text-yellow-300 absolute -top-1 -right-1" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-1 tracking-tight">
-            Painel <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">JR Streaming</span>
+            Painel <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">JR</span>
           </h1>
           <p className="text-gray-400 text-sm">Faça login para acessar o painel</p>
         </div>
