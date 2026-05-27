@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -62,6 +62,20 @@ export default function DashboardPage() {
     setTimeout(() => {
       container.remove();
     }, 3000);
+  };
+
+  const addLog = (action: string, clientName: string, details?: string) => {
+    const stored = localStorage.getItem('activity_logs');
+    const logs = stored ? JSON.parse(stored) : [];
+    logs.unshift({
+      id: Date.now().toString(),
+      action,
+      clientName,
+      timestamp: new Date().toISOString(),
+      details: details || ''
+    });
+    if (logs.length > 100) logs.pop();
+    localStorage.setItem('activity_logs', JSON.stringify(logs));
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -219,6 +233,7 @@ export default function DashboardPage() {
         });
         if (!res.ok) throw new Error('Erro ao atualizar');
         showToast('Cliente atualizado!');
+        addLog('updated', formData.name);
       } else {
         const res = await fetch('/api/clients', {
           method: 'POST',
@@ -227,6 +242,7 @@ export default function DashboardPage() {
         });
         if (!res.ok) throw new Error('Erro ao criar');
         showToast('Cliente criado!');
+        addLog('created', formData.name);
       }
       setModalOpen(false);
       loadClients();
@@ -256,6 +272,7 @@ export default function DashboardPage() {
       });
       if (!res.ok) throw new Error('Erro ao atualizar status');
       showToast(`Cliente ${newStatus === 'active' ? 'ativado' : 'bloqueado'}!`);
+      addLog(newStatus === 'active' ? 'activated' : 'blocked', client.name);
       loadClients();
     } catch (error) {
       showToast('Erro ao alterar status', 'error');
@@ -273,6 +290,7 @@ export default function DashboardPage() {
       if (res.ok) {
         setViewingClient(null);
         showToast('Cliente excluído!');
+        addLog('deleted', deleteModal.name);
         loadClients();
       } else {
         showToast('Erro ao excluir cliente', 'error');
@@ -412,6 +430,13 @@ export default function DashboardPage() {
               >
                 <BarChart3 size={20} />
                 <span>Estatísticas</span>
+              </a>
+              <a
+                href="/dashboard/logs"
+                className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}
+              >
+                <ScrollText size={20} />
+                <span>Logs</span>
               </a>
             </nav>
           </div>
@@ -579,9 +604,7 @@ export default function DashboardPage() {
                         <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>
                           <div className="flex items-center gap-2">
                             <span>{client.deviceId}</span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); copyToClipboard(client.deviceId, `device-${client.id}`); }}
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); copyToClipboard(client.deviceId, `device-${client.id}`); }}>
                               {copiedField === `device-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
                             </button>
                           </div>
@@ -589,9 +612,7 @@ export default function DashboardPage() {
                         <td className={`p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono`}>
                           <div className="flex items-center gap-2">
                             <span>{client.mac}</span>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); copyToClipboard(client.mac, `mac-${client.id}`); }}
-                            >
+                            <button onClick={(e) => { e.stopPropagation(); copyToClipboard(client.mac, `mac-${client.id}`); }}>
                               {copiedField === `mac-${client.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}
                             </button>
                           </div>
@@ -657,7 +678,6 @@ export default function DashboardPage() {
         </main>
       </div>
 
-      {/* Card de Visualização do Cliente */}
       {viewingClient && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setViewingClient(null)}>
           <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-md overflow-hidden shadow-2xl`} onClick={(e) => e.stopPropagation()}>
@@ -666,19 +686,13 @@ export default function DashboardPage() {
                 <div className={`w-3 h-3 rounded-full ${getStatusDot(viewingClient.status)} animate-pulse`} />
                 <h3 className={`text-lg font-semibold ${textColor}`}>{viewingClient.name}</h3>
               </div>
-              <button
-                onClick={() => setViewingClient(null)}
-                className={`p-1.5 rounded-lg ${hoverBg} ${textGray} hover:text-red-400 transition-colors`}
-              >
+              <button onClick={() => setViewingClient(null)} className={`p-1.5 rounded-lg ${hoverBg} ${textGray} hover:text-red-400 transition-colors`}>
                 <XCircle size={20} />
               </button>
             </div>
-
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-blue-500/10">
-                  <Smartphone size={18} className="text-blue-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-blue-500/10"><Smartphone size={18} className="text-blue-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>Device ID</p>
                   <div className="flex items-center gap-2">
@@ -689,298 +703,108 @@ export default function DashboardPage() {
                   </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-purple-500/10">
-                  <Monitor size={18} className="text-purple-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-purple-500/10"><Monitor size={18} className="text-purple-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>MAC Address</p>
                   <div className="flex items-center gap-2">
                     <p className={`text-sm font-mono ${textColor}`}>{viewingClient.mac || '—'}</p>
-                    {viewingClient.mac && (
-                      <button onClick={() => copyToClipboard(viewingClient.mac, 'view-mac')} className="text-gray-400 hover:text-white">
-                        {copiedField === 'view-mac' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                      </button>
-                    )}
+                    {viewingClient.mac && <button onClick={() => copyToClipboard(viewingClient.mac, 'view-mac')} className="text-gray-400 hover:text-white">{copiedField === 'view-mac' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
                   </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-cyan-500/10">
-                  <Globe size={18} className="text-cyan-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-cyan-500/10"><Globe size={18} className="text-cyan-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>URL do Servidor</p>
                   <div className="flex items-center gap-2">
                     <p className={`text-sm ${textColor} break-all`}>{viewingClient.serverUrl || '—'}</p>
-                    {viewingClient.serverUrl && (
-                      <button onClick={() => copyToClipboard(viewingClient.serverUrl, 'view-url')} className="text-gray-400 hover:text-white flex-shrink-0">
-                        {copiedField === 'view-url' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                      </button>
-                    )}
+                    {viewingClient.serverUrl && <button onClick={() => copyToClipboard(viewingClient.serverUrl, 'view-url')} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === 'view-url' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
                   </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/10">
-                  <Wifi size={18} className="text-emerald-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-emerald-500/10"><Wifi size={18} className="text-emerald-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>Usuário / Senha</p>
                   <p className={`text-sm ${textColor}`}>{viewingClient.username || '—'} / {viewingClient.password || '—'}</p>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-500/10">
-                  <MonitorSmartphone size={18} className="text-indigo-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-indigo-500/10"><MonitorSmartphone size={18} className="text-indigo-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>User-Agent</p>
                   <div className="flex items-center gap-2">
                     <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
-                    {viewingClient.userAgent && (
-                      <button onClick={() => copyToClipboard(viewingClient.userAgent, 'view-useragent')} className="text-gray-400 hover:text-white flex-shrink-0">
-                        {copiedField === 'view-useragent' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                      </button>
-                    )}
+                    {viewingClient.userAgent && <button onClick={() => copyToClipboard(viewingClient.userAgent, 'view-useragent')} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === 'view-useragent' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
                   </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/10">
-                  <Calendar size={18} className="text-amber-400" />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-xs ${textGray}`}>Validade</p>
-                  <p className={`text-sm ${textColor}`}>{new Date(viewingClient.validade).toLocaleDateString('pt-BR')}</p>
-                </div>
+                <div className="p-2 rounded-lg bg-amber-500/10"><Calendar size={18} className="text-amber-400" /></div>
+                <div className="flex-1"><p className={`text-xs ${textGray}`}>Validade</p><p className={`text-sm ${textColor}`}>{new Date(viewingClient.validade).toLocaleDateString('pt-BR')}</p></div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-rose-500/10">
-                  <Phone size={18} className="text-rose-400" />
-                </div>
+                <div className="p-2 rounded-lg bg-rose-500/10"><Phone size={18} className="text-rose-400" /></div>
                 <div className="flex-1">
                   <p className={`text-xs ${textGray}`}>Contato</p>
                   <div className="flex items-center gap-2">
                     <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
-                    {viewingClient.contato && (
-                      <button onClick={() => copyToClipboard(viewingClient.contato, 'view-contato')} className="text-gray-400 hover:text-white flex-shrink-0">
-                        {copiedField === 'view-contato' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
-                      </button>
-                    )}
+                    {viewingClient.contato && <button onClick={() => copyToClipboard(viewingClient.contato, 'view-contato')} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === 'view-contato' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
                   </div>
                 </div>
               </div>
-
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}>
-                  <div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-xs ${textGray}`}>Status</p>
-                  <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>
-                    {getStatusText(viewingClient.status)}
-                  </span>
-                </div>
+                <div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}><div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} /></div>
+                <div className="flex-1"><p className={`text-xs ${textGray}`}>Status</p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>{getStatusText(viewingClient.status)}</span></div>
               </div>
             </div>
-
             <div className={`p-4 border-t ${borderColor} flex gap-3`}>
-              <button
-                onClick={() => openEditModal(viewingClient)}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"
-              >
-                <Pencil size={16} />
-                Editar
-              </button>
-              <button
-                onClick={() => setViewingClient(null)}
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}
-              >
-                <XCircle size={16} />
-                Fechar
-              </button>
+              <button onClick={() => openEditModal(viewingClient)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium transition-colors"><Pencil size={16} />Editar</button>
+              <button onClick={() => setViewingClient(null)} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}><XCircle size={16} />Fechar</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de Confirmação de Exclusão */}
       {deleteModal && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-sm p-6 shadow-2xl`}>
             <div className="text-center">
-              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Trash2 size={24} className="text-red-400" />
-              </div>
+              <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4"><Trash2 size={24} className="text-red-400" /></div>
               <h3 className={`text-lg font-semibold ${textColor} mb-2`}>Excluir Cliente</h3>
-              <p className={`text-sm ${textGray} mb-6`}>
-                Tem certeza que deseja excluir <strong className={textColor}>{deleteModal.name}</strong>? Esta ação não pode ser desfeita.
-              </p>
+              <p className={`text-sm ${textGray} mb-6`}>Tem certeza que deseja excluir <strong className={textColor}>{deleteModal.name}</strong>?</p>
             </div>
             <div className="flex gap-3">
-              <button
-                onClick={() => setDeleteModal(null)}
-                className={`flex-1 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={confirmDelete}
-                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors"
-              >
-                Excluir
-              </button>
+              <button onClick={() => setDeleteModal(null)} className={`flex-1 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg} transition-colors`}>Cancelar</button>
+              <button onClick={confirmDelete} className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium transition-colors">Excluir</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de Edição/Criação */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className={`${cardBg} rounded-xl border ${borderColor} w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
-            <div className={`p-6 border-b ${borderColor}`}>
-              <h3 className={`text-lg font-semibold ${textColor}`}>
-                {editingClient ? 'Editar Cliente' : 'Novo Cliente'}
-              </h3>
-            </div>
-
+            <div className={`p-6 border-b ${borderColor}`}><h3 className={`text-lg font-semibold ${textColor}`}>{editingClient ? 'Editar Cliente' : 'Novo Cliente'}</h3></div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>Nome</label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>Device ID</label>
-                <input
-                  type="text"
-                  value={formData.deviceId}
-                  onChange={(e) => setFormData({ ...formData, deviceId: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>MAC</label>
-                <input
-                  type="text"
-                  value={formData.mac}
-                  onChange={(e) => setFormData({ ...formData, mac: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  placeholder="00:00:00:00:00:00"
-                />
-              </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>URL do Servidor</label>
-                <input
-                  type="text"
-                  value={formData.serverUrl}
-                  onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  placeholder="http://exemplo.com:8080"
-                />
-              </div>
-
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Nome</label><input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Device ID</label><input type="text" value={formData.deviceId} onChange={(e) => setFormData({ ...formData, deviceId: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>MAC</label><input type="text" value={formData.mac} onChange={(e) => setFormData({ ...formData, mac: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="00:00:00:00:00:00" /></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>URL do Servidor</label><input type="text" value={formData.serverUrl} onChange={(e) => setFormData({ ...formData, serverUrl: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="http://exemplo.com:8080" /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium ${textGray} mb-1`}>Usuário</label>
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  />
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium ${textGray} mb-1`}>Senha</label>
-                  <input
-                    type="text"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  />
-                </div>
+                <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Usuário</label><input type="text" value={formData.username} onChange={(e) => setFormData({ ...formData, username: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div>
+                <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Senha</label><input type="text" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div>
               </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label>
-                <input
-                  type="text"
-                  value={formData.userAgent}
-                  onChange={(e) => setFormData({ ...formData, userAgent: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  placeholder="Ex: Mozilla/5.0..."
-                />
-              </div>
-
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label><input type="text" value={formData.userAgent} onChange={(e) => setFormData({ ...formData, userAgent: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="Ex: Mozilla/5.0..." /></div>
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={`block text-sm font-medium ${textGray} mb-1`}>Status</label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  >
-                    <option value="active">Ativo</option>
-                    <option value="blocked">Bloqueado</option>
-                    <option value="expired">Expirado</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label>
-                  <input
-                    type="date"
-                    value={formData.validade}
-                    onChange={(e) => setFormData({ ...formData, validade: e.target.value })}
-                    className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                    required
-                  />
-                </div>
+                <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Status</label><select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}><option value="active">Ativo</option><option value="blocked">Bloqueado</option><option value="expired">Expirado</option></select></div>
+                <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label><input type="date" value={formData.validade} onChange={(e) => setFormData({ ...formData, validade: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div>
               </div>
-
-              <div>
-                <label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label>
-                <input
-                  type="text"
-                  value={formData.contato}
-                  onChange={(e) => setFormData({ ...formData, contato: e.target.value })}
-                  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-                  placeholder="WhatsApp, telefone..."
-                />
-              </div>
-
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input type="text" value={formData.contato} onChange={(e) => setFormData({ ...formData, contato: e.target.value })} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="WhatsApp, telefone..." /></div>
               <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className={`flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors`}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all"
-                >
-                  {editingClient ? 'Salvar' : 'Adicionar'}
-                </button>
+                <button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors">Cancelar</button>
+                <button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg transition-all">{editingClient ? 'Salvar' : 'Adicionar'}</button>
               </div>
             </form>
           </div>
