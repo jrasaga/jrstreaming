@@ -93,22 +93,26 @@ export default function DashboardPage() {
   };
 
   const getExpiryInfo = (validade: string, status: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const expiry = new Date(validade);
-    expiry.setHours(0, 0, 0, 0);
-    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (status === 'expired' || diffDays < 0) {
-      return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
-    } else if (diffDays === 0) {
-      return { text: 'Expira hoje', color: 'text-amber-400' };
-    } else if (diffDays <= 7) {
-      return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
-    } else {
-      return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
-    }
-  };
+  if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const expiry = new Date(validade + 'T00:00:00');
+  
+  if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
+  
+  const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  
+  if (status === 'expired' || diffDays < 0) {
+    return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
+  } else if (diffDays === 0) {
+    return { text: 'Expira hoje', color: 'text-amber-400' };
+  } else if (diffDays <= 7) {
+    return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
+  } else {
+    return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
+  }
+};
 
   useEffect(() => {
     const logged = localStorage.getItem('admin_logged');
