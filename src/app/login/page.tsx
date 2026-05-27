@@ -41,78 +41,79 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Grid de fundo sutil */}
-      <div className="absolute inset-0" style={{
-        backgroundImage: 'linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)',
-        backgroundSize: '60px 60px'
-      }}></div>
-      
-      {/* Gradiente centralizado */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-br from-blue-600/10 via-purple-600/5 to-transparent rounded-full blur-3xl"></div>
-
-      <div className="w-full max-w-sm relative z-10">
-        {/* Logo */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 mb-6">
-            <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none">
-              <rect width="32" height="32" rx="8" className="fill-blue-600" />
-              <path d="M8 10L20 16L8 22V10Z" fill="white" />
+    <div className="min-h-screen bg-black flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
+        {/* Logo JR STREAMING */}
+        <div className="text-center mb-12">
+          {/* Botão Play animado */}
+          <div className="inline-flex items-center justify-center mb-8 relative">
+            <div className="absolute inset-0 bg-blue-500 rounded-full blur-2xl opacity-30 animate-pulse"></div>
+            <div className="relative w-16 h-16 rounded-full border-2 border-blue-500 flex items-center justify-center">
+              <div className="w-0 h-0 border-t-[10px] border-t-transparent border-b-[10px] border-b-transparent border-l-[16px] border-l-blue-500 ml-1"></div>
+            </div>
+            {/* Anel girando */}
+            <svg className="absolute w-20 h-20 animate-spin-slow" viewBox="0 0 80 80">
+              <circle cx="40" cy="40" r="38" fill="none" stroke="rgba(59,130,246,0.2)" strokeWidth="1" strokeDasharray="10 5" />
             </svg>
-            <span className="text-white text-2xl font-light tracking-wider">JR</span>
           </div>
-          <p className="text-gray-500 text-xs tracking-widest uppercase">Painel Administrativo</p>
+
+          {/* Texto JR estilizado */}
+          <h1 className="text-5xl font-black tracking-tighter text-white mb-2">
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-400 to-blue-500 bg-clip-text text-transparent">
+              JR
+            </span>
+          </h1>
+          
+          {/* Streaming com efeito */}
+          <div className="flex items-center justify-center gap-1">
+            <span className="text-gray-500 text-sm font-light tracking-[0.3em] uppercase">Streaming</span>
+            <div className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></div>
+          </div>
         </div>
 
         {/* Card de login */}
-        <div className="bg-neutral-900/80 backdrop-blur-sm border border-neutral-800 rounded-2xl p-6">
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all"
-                placeholder="Email"
-                required
-              />
-            </div>
+        <div className="space-y-4">
+          <form onSubmit={handleLogin} className="space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:border-blue-600 transition-all"
+              placeholder="Email"
+              required
+            />
 
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 bg-neutral-800 border border-neutral-700 rounded-xl text-white text-sm placeholder-neutral-500 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 transition-all pr-12"
+                className="w-full px-4 py-3 bg-neutral-900 border border-neutral-800 rounded-xl text-white text-sm placeholder-neutral-600 focus:outline-none focus:border-blue-600 transition-all pr-12"
                 placeholder="Senha"
                 required
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-neutral-300 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-600 hover:text-neutral-400 transition-colors"
               >
-                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
 
             {error && (
-              <div className="bg-red-500/5 border border-red-500/20 rounded-xl p-3">
-                <p className="text-red-400 text-xs text-center">{error}</p>
-              </div>
+              <p className="text-red-400 text-xs text-center py-1">{error}</p>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium py-3 px-4 rounded-xl transition-all duration-200"
+              className="w-full bg-white hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed text-black text-sm font-medium py-3 px-4 rounded-xl transition-all duration-200"
             >
               {loading ? 'Entrando...' : 'Entrar'}
             </button>
           </form>
         </div>
-        
-        <p className="text-neutral-700 text-xs text-center mt-6">JR Streaming v1.0</p>
       </div>
     </div>
   );
