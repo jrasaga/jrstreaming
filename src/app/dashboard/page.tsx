@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3 } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -322,6 +322,13 @@ export default function DashboardPage() {
                 <Users size={20} />
                 <span className="font-medium">Clientes</span>
               </button>
+              <a
+                href="/dashboard/estatisticas"
+                className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}
+              >
+                <BarChart3 size={20} />
+                <span>Estatísticas</span>
+              </a>
             </nav>
           </div>
 
