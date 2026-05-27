@@ -653,14 +653,21 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-indigo-500/10">
-                  <MonitorSmartphone size={18} className="text-indigo-400" />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-xs ${textGray}`}>User-Agent</p>
-                  <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
-                </div>
-              </div>
+  <div className="p-2 rounded-lg bg-indigo-500/10">
+    <MonitorSmartphone size={18} className="text-indigo-400" />
+  </div>
+  <div className="flex-1">
+    <p className={`text-xs ${textGray}`}>User-Agent</p>
+    <div className="flex items-center gap-2">
+      <p className={`text-sm ${textColor} break-all`}>{viewingClient.userAgent || '—'}</p>
+      {viewingClient.userAgent && (
+        <button onClick={() => copyToClipboard(viewingClient.userAgent, 'view-useragent')} className="text-gray-400 hover:text-white flex-shrink-0">
+          {copiedField === 'view-useragent' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+        </button>
+      )}
+    </div>
+  </div>
+</div>
 
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-amber-500/10">
@@ -673,14 +680,21 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-rose-500/10">
-                  <Phone size={18} className="text-rose-400" />
-                </div>
-                <div className="flex-1">
-                  <p className={`text-xs ${textGray}`}>Contato</p>
-                  <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
-                </div>
-              </div>
+  <div className="p-2 rounded-lg bg-rose-500/10">
+    <Phone size={18} className="text-rose-400" />
+  </div>
+  <div className="flex-1">
+    <p className={`text-xs ${textGray}`}>Contato</p>
+    <div className="flex items-center gap-2">
+      <p className={`text-sm ${textColor}`}>{viewingClient.contato || '—'}</p>
+      {viewingClient.contato && (
+        <button onClick={() => copyToClipboard(viewingClient.contato, 'view-contato')} className="text-gray-400 hover:text-white flex-shrink-0">
+          {copiedField === 'view-contato' ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}
+        </button>
+      )}
+    </div>
+  </div>
+</div>
 
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}>
