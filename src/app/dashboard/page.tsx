@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -25,6 +25,8 @@ export default function DashboardPage() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [sortField, setSortField] = useState<string>('');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [darkMode, setDarkMode] = useState(true);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
@@ -284,6 +286,15 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSort = (field: string) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
   const filteredClients = clients.filter(client => {
     const matchesSearch = 
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -295,6 +306,14 @@ export default function DashboardPage() {
     const matchesStatus = statusFilter === 'all' || client.status === statusFilter;
     
     return matchesSearch && matchesStatus;
+  });
+
+  const sortedClients = [...filteredClients].sort((a, b) => {
+    if (!sortField) return 0;
+    const aVal = a[sortField as keyof Client] || '';
+    const bVal = b[sortField as keyof Client] || '';
+    const compare = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    return sortDirection === 'asc' ? compare : -compare;
   });
 
   const activeClients = clients.filter(c => c.status === 'active').length;
@@ -480,7 +499,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="overflow-x-auto">
-              {filteredClients.length === 0 && searchTerm ? (
+              {sortedClients.length === 0 && searchTerm ? (
                 <div className="text-center py-12 text-gray-400">
                   <Search size={48} className="mx-auto mb-4 opacity-50" />
                   <p>Nenhum cliente encontrado</p>
@@ -496,17 +515,32 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className={`border-b ${borderColor}`}>
-                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Nome</th>
-                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden sm:table-cell`}>Usuário</th>
+                      <th onClick={() => handleSort('name')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white transition-colors`}>
+                        <div className="flex items-center gap-1">
+                          Nome
+                          {sortField === 'name' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}
+                        </div>
+                      </th>
+                      <th onClick={() => handleSort('username')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white transition-colors hidden sm:table-cell`}>
+                        <div className="flex items-center gap-1">
+                          Usuário
+                          {sortField === 'username' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}
+                        </div>
+                      </th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Device ID</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
-                      <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Status</th>
+                      <th onClick={() => handleSort('status')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white transition-colors hidden md:table-cell`}>
+                        <div className="flex items-center gap-1">
+                          Status
+                          {sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}
+                        </div>
+                      </th>
                       <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredClients.map((client) => (
+                    {sortedClients.map((client) => (
                       <tr 
                         key={client.id} 
                         className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`}
