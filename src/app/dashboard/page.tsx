@@ -83,6 +83,24 @@ export default function DashboardPage() {
     showToast('Clientes exportados!');
   };
 
+  const getExpiryInfo = (validade: string, status: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const expiry = new Date(validade);
+    expiry.setHours(0, 0, 0, 0);
+    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (status === 'expired' || diffDays < 0) {
+      return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
+    } else if (diffDays === 0) {
+      return { text: 'Expira hoje', color: 'text-amber-400' };
+    } else if (diffDays <= 7) {
+      return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
+    } else {
+      return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
+    }
+  };
+
   useEffect(() => {
     const logged = localStorage.getItem('admin_logged');
     if (!logged) {
@@ -469,8 +487,16 @@ export default function DashboardPage() {
                         <td className={`p-3 lg:p-4 text-gray-300 hidden sm:table-cell`}>{client.username}</td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono`}>{client.deviceId}</td>
                         <td className={`p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono`}>{client.mac}</td>
-                        <td className={`p-3 lg:p-4 text-gray-300 hidden xl:table-cell`}>
-                          {new Date(client.validade).toLocaleDateString('pt-BR')}
+                        <td className={`p-3 lg:p-4 hidden xl:table-cell`}>
+                          {(() => {
+                            const info = getExpiryInfo(client.validade, client.status);
+                            return (
+                              <div>
+                                <span className={info.color}>{info.text}</span>
+                                <p className="text-xs text-gray-500">{new Date(client.validade).toLocaleDateString('pt-BR')}</p>
+                              </div>
+                            );
+                          })()}
                         </td>
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={(e) => e.stopPropagation()}>
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(client.status)}`}>
