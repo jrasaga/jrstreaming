@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2 } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(true);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
+  const [fullscreen, setFullscreen] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -261,96 +262,102 @@ export default function DashboardPage() {
         />
       )}
 
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-30
-        w-64 ${sidebarBg} border-r ${borderColor}
-        transform transition-transform duration-200
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0
-      `}>
-        <div className="p-6">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
-              <Play size={20} className="text-white" fill="white" />
-            </div>
-            <div>
-              <button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>
-                JR STREAMING
+      {!fullscreen && (
+        <div className={`
+          fixed lg:static inset-y-0 left-0 z-30
+          w-64 ${sidebarBg} border-r ${borderColor}
+          transform transition-transform duration-200
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+        `}>
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20">
+                <Play size={20} className="text-white" fill="white" />
+              </div>
+              <div>
+                <button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>
+                  JR STREAMING
+                </button>
+                <p className="text-xs text-gray-400">Painel</p>
+              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="lg:hidden text-gray-400 hover:text-white ml-auto"
+              >
+                <X size={24} />
               </button>
-              <p className="text-xs text-gray-400">Painel</p>
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden text-gray-400 hover:text-white ml-auto"
-            >
-              <X size={24} />
-            </button>
+
+            <nav className="space-y-1">
+              <button
+                onClick={() => window.location.reload()}
+                className="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 rounded-xl w-full text-left"
+              >
+                <Users size={20} />
+                <span className="font-medium">Clientes</span>
+              </button>
+            </nav>
           </div>
 
-          <nav className="space-y-1">
+          <div className={`absolute bottom-0 left-0 right-0 p-6 border-t ${borderColor}`}>
             <button
-              onClick={() => window.location.reload()}
-              className="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 rounded-xl w-full text-left"
+              onClick={() => setDarkMode(!darkMode)}
+              className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:${textColor} w-full rounded-xl ${hoverBg} transition-colors mb-2`}
             >
-              <Users size={20} />
-              <span className="font-medium">Clientes</span>
+              {darkMode ? <Sun size={20} /> : <Moon size={20} />}
+              <span>{darkMode ? 'Tema Claro' : 'Tema Escuro'}</span>
             </button>
-          </nav>
+            <button
+              onClick={handleLogout}
+              className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-red-400 w-full rounded-xl ${hoverBg} transition-colors`}
+            >
+              <LogOut size={20} />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
-
-        <div className={`absolute bottom-0 left-0 right-0 p-6 border-t ${borderColor}`}>
-          <button
-            onClick={() => setDarkMode(!darkMode)}
-            className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:${textColor} w-full rounded-xl ${hoverBg} transition-colors mb-2`}
-          >
-            {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-            <span>{darkMode ? 'Tema Claro' : 'Tema Escuro'}</span>
-          </button>
-          <button
-            onClick={handleLogout}
-            className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-red-400 w-full rounded-xl ${hoverBg} transition-colors`}
-          >
-            <LogOut size={20} />
-            <span>Sair</span>
-          </button>
-        </div>
-      </div>
+      )}
 
       <div className="flex-1 flex flex-col min-h-screen">
-        <header className={`${headerBg} border-b ${borderColor} p-4`}>
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="lg:hidden text-gray-400 hover:text-white"
-            >
-              <Menu size={24} />
-            </button>
-            <h2 className={`text-lg font-semibold ${textColor} lg:hidden`}>Dashboard</h2>
-            <div className="hidden lg:block"></div>
-          </div>
-        </header>
+        {!fullscreen && (
+          <header className={`${headerBg} border-b ${borderColor} p-4`}>
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden text-gray-400 hover:text-white"
+              >
+                <Menu size={24} />
+              </button>
+              <h2 className={`text-lg font-semibold ${textColor} lg:hidden`}>Dashboard</h2>
+              <div className="hidden lg:block"></div>
+            </div>
+          </header>
+        )}
 
         <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
-            {stats.map((stat, index) => (
-              <div
-                key={index}
-                className={`${cardBg} rounded-xl p-4 lg:p-6 border ${borderColor}`}
-              >
-                <div className="flex items-center gap-3 lg:gap-4">
-                  <div className={`p-2 lg:p-3 rounded-lg bg-${stat.color}-500/10`}>
-                    <stat.icon className={`text-${stat.color}-400`} size={20} />
-                  </div>
-                  <div>
-                    <p className={`text-xs lg:text-sm ${textGray}`}>{stat.label}</p>
-                    <p className={`text-lg lg:text-2xl font-bold ${textColor}`}>{stat.value}</p>
+          {!fullscreen && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+              {stats.map((stat, index) => (
+                <div
+                  key={index}
+                  className={`${cardBg} rounded-xl p-4 lg:p-6 border ${borderColor}`}
+                >
+                  <div className="flex items-center gap-3 lg:gap-4">
+                    <div className={`p-2 lg:p-3 rounded-lg bg-${stat.color}-500/10`}>
+                      <stat.icon className={`text-${stat.color}-400`} size={20} />
+                    </div>
+                    <div>
+                      <p className={`text-xs lg:text-sm ${textGray}`}>{stat.label}</p>
+                      <p className={`text-lg lg:text-2xl font-bold ${textColor}`}>{stat.value}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
-          <div className={`${cardBg} rounded-xl border ${borderColor}`}>
+          <div className={`${cardBg} rounded-xl border ${borderColor} ${fullscreen ? 'fixed inset-0 z-50 overflow-auto rounded-none' : ''}`}>
             <div className="p-4 lg:p-6 border-b border-gray-700">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
                 <h3 className={`text-lg font-semibold ${textColor}`}>Clientes</h3>
@@ -365,6 +372,13 @@ export default function DashboardPage() {
                       className={`w-full sm:w-64 pl-10 pr-4 py-2 ${inputBg} border ${inputBorder} rounded-xl ${textColor} placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
                     />
                   </div>
+                  <button
+                    onClick={() => setFullscreen(!fullscreen)}
+                    className="p-2 bg-gray-700 hover:bg-gray-600 text-white rounded-xl transition-colors"
+                    title={fullscreen ? 'Sair da tela cheia' : 'Tela cheia'}
+                  >
+                    {fullscreen ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
+                  </button>
                   <button
                     onClick={openNewModal}
                     className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-blue-600/20 whitespace-nowrap"
