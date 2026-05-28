@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload, Tv } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -57,79 +57,52 @@ export default function DashboardPage() {
   });
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
-    const container = document.createElement('div');
-    container.className = 'toast-container';
-    const toastEl = document.createElement('div');
-    toastEl.className = `toast ${type}`;
-    toastEl.textContent = message;
-    container.appendChild(toastEl);
-    document.body.appendChild(container);
+    const container = document.createElement('div'); container.className = 'toast-container';
+    const toastEl = document.createElement('div'); toastEl.className = `toast ${type}`; toastEl.textContent = message;
+    container.appendChild(toastEl); document.body.appendChild(container);
     setTimeout(() => container.remove(), 3000);
   };
 
   const addLog = (action: string, clientName: string, details?: string) => {
-    const stored = localStorage.getItem('activity_logs');
-    const logs = stored ? JSON.parse(stored) : [];
+    const stored = localStorage.getItem('activity_logs'); const logs = stored ? JSON.parse(stored) : [];
     logs.unshift({ id: Date.now().toString(), action, clientName, timestamp: new Date().toISOString(), details: details || '' });
-    if (logs.length > 100) logs.pop();
-    localStorage.setItem('activity_logs', JSON.stringify(logs));
+    if (logs.length > 100) logs.pop(); localStorage.setItem('activity_logs', JSON.stringify(logs));
   };
 
   const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedField(field);
-      showToast('Copiado!');
-      setTimeout(() => setCopiedField(null), 2000);
-    });
+    navigator.clipboard.writeText(text).then(() => { setCopiedField(field); showToast('Copiado!'); setTimeout(() => setCopiedField(null), 2000); });
   };
 
-  const isOnline = (lastSeen: string) => {
-    if (!lastSeen) return false;
-    const diffMinutes = (Date.now() - new Date(lastSeen).getTime()) / 60000;
-    return diffMinutes < 5;
-  };
-
-  const isWatching = (client: Client) => {
-    if (!client.watching || !client.lastHeartbeat) return false;
+  const getOnlineStatus = (client: Client) => {
+    if (!client.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
     const diffSeconds = (Date.now() - new Date(client.lastHeartbeat).getTime()) / 1000;
-    return diffSeconds < 90;
+    if (diffSeconds < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
+    return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
   };
 
   const getLastSeenText = (lastSeen: string) => {
     if (!lastSeen) return 'Nunca';
     const diffMinutes = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 60000);
-    if (diffMinutes < 1) return 'Agora';
-    if (diffMinutes < 60) return `Há ${diffMinutes} min`;
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `Há ${diffHours}h`;
+    if (diffMinutes < 1) return 'Agora'; if (diffMinutes < 60) return `Há ${diffMinutes} min`;
+    const diffHours = Math.floor(diffMinutes / 60); if (diffHours < 24) return `Há ${diffHours}h`;
     return `Há ${Math.floor(diffHours / 24)} dias`;
   };
 
   const exportToCSV = () => {
     const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Observações', 'Último Acesso'];
     const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, c.notes, getLastSeenText(c.lastSeen)]);
-    const csvContent = [headers, ...csvData].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    showToast('Clientes exportados!');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`; link.click(); showToast('Clientes exportados!');
   };
 
   const backupData = () => {
     const backup = { version: '1.0', date: new Date().toISOString(), clients: clients.map(({ id, ...rest }) => rest), logs: JSON.parse(localStorage.getItem('activity_logs') || '[]') };
-    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `backup_jr_${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    showToast('Backup criado!');
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }); const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = `backup_jr_${new Date().toISOString().split('T')[0]}.json`; link.click(); showToast('Backup criado!');
   };
 
   const restoreData = () => {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = '.json';
+    const input = document.createElement('input'); input.type = 'file'; input.accept = '.json';
     input.onchange = async (e: any) => {
       try {
         const file = e.target.files[0]; const text = await file.text(); const backup = JSON.parse(text);
@@ -146,8 +119,7 @@ export default function DashboardPage() {
 
   const getExpiryInfo = (validade: string, status: string) => {
     if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
-    const today = new Date(); today.setHours(0,0,0,0);
-    const expiry = new Date(validade + 'T00:00:00');
+    const today = new Date(); today.setHours(0,0,0,0); const expiry = new Date(validade + 'T00:00:00');
     if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
     const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / 86400000);
     if (status === 'expired' || diffDays < 0) return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
@@ -158,7 +130,6 @@ export default function DashboardPage() {
 
   const toggleSelect = (id: string) => { const ns = new Set(selectedClients); ns.has(id) ? ns.delete(id) : ns.add(id); setSelectedClients(ns); };
   const toggleSelectAll = () => { if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); } else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); } };
-
   const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
     if (selectedClients.size === 0) return showToast('Nenhum selecionado', 'error');
     if (!confirm(`${action === 'delete' ? 'Excluir' : action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`)) return;
@@ -177,7 +148,6 @@ export default function DashboardPage() {
   const handleLogout = () => { localStorage.removeItem('admin_logged'); localStorage.removeItem('admin_token'); router.push('/login'); };
   const openNewModal = () => { setEditingClient(null); setFormData({ deviceId: '', name: '', mac: '', serverUrl: '', username: '', password: '', userAgent: '', status: 'active', validade: '', contato: '', notes: '' }); setModalOpen(true); };
   const openEditModal = (c: Client) => { setViewingClient(null); setEditingClient(c); setFormData({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl || '', username: c.username || '', password: c.password || '', userAgent: c.userAgent || '', status: c.status, validade: c.validade, contato: c.contato || '', notes: c.notes || '' }); setModalOpen(true); };
-
   const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); try { const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients'; const method = editingClient ? 'PUT' : 'POST'; const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }); if (!r.ok) throw new Error('Erro'); showToast(editingClient ? 'Cliente atualizado!' : 'Cliente criado!'); addLog(editingClient ? 'updated' : 'created', formData.name); setModalOpen(false); loadClients(); } catch { showToast('Erro ao salvar', 'error'); } };
   const toggleStatus = async (c: Client) => { const ns = c.status === 'active' ? 'blocked' : 'active'; try { const r = await fetch(`/api/clients/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl, username: c.username, password: c.password, userAgent: c.userAgent, status: ns, validade: c.validade, contato: c.contato, notes: c.notes }) }); if (!r.ok) throw new Error('Erro'); showToast(`Cliente ${ns === 'active' ? 'ativado' : 'bloqueado'}!`); addLog(ns === 'active' ? 'activated' : 'blocked', c.name); loadClients(); } catch { showToast('Erro', 'error'); } };
   const handleDelete = (c: Client) => setDeleteModal(c);
@@ -186,14 +156,12 @@ export default function DashboardPage() {
   const getStatusColor = (s: string) => ({ active: 'bg-emerald-500/10 text-emerald-400', blocked: 'bg-red-500/10 text-red-400', expired: 'bg-amber-500/10 text-amber-400' }[s] || 'bg-gray-500/10 text-gray-400');
   const getStatusDot = (s: string) => ({ active: 'bg-emerald-400', blocked: 'bg-red-400', expired: 'bg-amber-400' }[s] || 'bg-gray-400');
   const getStatusText = (s: string) => ({ active: 'Ativo', blocked: 'Bloqueado', expired: 'Expirado' }[s] || s);
-
   const handleSort = (field: string) => { if (sortField === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortField(field); setSortDirection('asc'); } setCurrentPage(1); };
 
   const filteredClients = clients.filter(c => { const ms = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.username.toLowerCase().includes(searchTerm.toLowerCase()) || c.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) || c.mac.toLowerCase().includes(searchTerm.toLowerCase()) || c.contato.toLowerCase().includes(searchTerm.toLowerCase()) || (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase())); return ms && (statusFilter === 'all' || c.status === statusFilter); });
   const sortedClients = [...filteredClients].sort((a, b) => { if (!sortField) return 0; const av = a[sortField as keyof Client] || '', bv = b[sortField as keyof Client] || ''; return sortDirection === 'asc' ? (av < bv ? -1 : av > bv ? 1 : 0) : (av < bv ? 1 : av > bv ? -1 : 0); });
   const totalPages = Math.ceil(sortedClients.length / itemsPerPage);
   const paginatedClients = sortedClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
   const activeClients = clients.filter(c => c.status === 'active').length;
   const blockedClients = clients.filter(c => c.status === 'blocked').length;
   const expiredClients = clients.filter(c => c.status === 'expired').length;
@@ -204,16 +172,9 @@ export default function DashboardPage() {
     { label: 'Expirados', value: expiredClients, icon: Clock, color: 'amber' },
   ];
 
-  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
-  const sidebarBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const headerBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
-  const textColor = darkMode ? 'text-white' : 'text-gray-900';
-  const textGray = darkMode ? 'text-gray-400' : 'text-gray-500';
-  const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
-  const inputBg = darkMode ? 'bg-gray-700' : 'bg-gray-50';
-  const inputBorder = darkMode ? 'border-gray-600' : 'border-gray-300';
-  const hoverBg = darkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50';
+  const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50'; const sidebarBg = darkMode ? 'bg-gray-800' : 'bg-white'; const headerBg = darkMode ? 'bg-gray-800' : 'bg-white'; const cardBg = darkMode ? 'bg-gray-800' : 'bg-white';
+  const textColor = darkMode ? 'text-white' : 'text-gray-900'; const textGray = darkMode ? 'text-gray-400' : 'text-gray-500'; const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+  const inputBg = darkMode ? 'bg-gray-700' : 'bg-gray-50'; const inputBorder = darkMode ? 'border-gray-600' : 'border-gray-300'; const hoverBg = darkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50';
 
   return (
     <div className={`min-h-screen ${bgColor} flex transition-colors duration-200`}>
@@ -272,14 +233,14 @@ export default function DashboardPage() {
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
                     <th onClick={() => handleSort('status')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white hidden md:table-cell`}><div className="flex items-center gap-1">Status{sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
-                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Ao Vivo</th>
+                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Online</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                   </tr></thead>
                   <tbody>
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedClients.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded border-gray-500 bg-gray-700" /></td>
-                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{isWatching(c) && <span className="inline-flex items-center ml-2 md:hidden"><div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div></span>}{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
+                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{(() => { const s = getOnlineStatus(c); return s.online && <span className="inline-flex items-center ml-2 md:hidden"><div className={`w-2 h-2 rounded-full ${s.color}`}></div></span>; })()}{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
@@ -287,7 +248,7 @@ export default function DashboardPage() {
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>{getStatusText(c.status)}</span></td>
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}>
                           <div className="flex items-center gap-2">
-                            {isWatching(c) ? <><div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div><span className="text-xs text-red-400 font-medium">Assistindo</span></> : isOnline(c.lastSeen) ? <><div className="w-2 h-2 rounded-full bg-emerald-400"></div><span className={`text-xs ${textGray}`}>Online</span></> : <><div className="w-2 h-2 rounded-full bg-gray-500"></div><span className={`text-xs ${textGray}`}>Offline</span></>}
+                            {(() => { const s = getOnlineStatus(c); return <><div className={`w-2 h-2 rounded-full ${s.color}`}></div><span className={`text-xs font-medium ${s.textColor}`}>{s.text}</span></>; })()}
                           </div>
                         </td>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><div className="flex gap-1 lg:gap-2"><button onClick={() => toggleStatus(c)} className={`p-1.5 lg:p-2 rounded-lg ${c.status === 'active' ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-red-400 hover:bg-red-400/10'}`}>{c.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}</button><button onClick={() => openEditModal(c)} className="p-1.5 lg:p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg"><Pencil size={16} /></button><button onClick={e => { e.stopPropagation(); handleDelete(c); }} className="p-1.5 lg:p-2 text-red-400 hover:bg-red-400/10 rounded-lg"><Trash2 size={16} /></button></div></td>
@@ -323,7 +284,6 @@ export default function DashboardPage() {
               {[{ icon: Smartphone, color: 'blue', label: 'Device ID', value: viewingClient.deviceId, field: 'view-device' }, { icon: Monitor, color: 'purple', label: 'MAC Address', value: viewingClient.mac, field: 'view-mac' }, { icon: Globe, color: 'cyan', label: 'URL do Servidor', value: viewingClient.serverUrl, field: 'view-url' }, { icon: Wifi, color: 'emerald', label: 'Usuário / Senha', value: `${viewingClient.username || '—'} / ${viewingClient.password || '—'}`, field: '' }, { icon: MonitorSmartphone, color: 'indigo', label: 'User-Agent', value: viewingClient.userAgent, field: 'view-useragent' }, { icon: Calendar, color: 'amber', label: 'Validade', value: new Date(viewingClient.validade).toLocaleDateString('pt-BR'), field: '' }, { icon: Phone, color: 'rose', label: 'Contato', value: viewingClient.contato, field: 'view-contato' }].map((item, i) => (
                 <div key={i} className="flex items-center gap-3"><div className={`p-2 rounded-lg bg-${item.color}-500/10`}><item.icon size={18} className={`text-${item.color}-400`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>{item.label}</p><div className="flex items-center gap-2"><p className={`text-sm ${item.field ? 'font-mono' : ''} ${textColor} ${item.label === 'URL do Servidor' || item.label === 'User-Agent' ? 'break-all' : ''}`}>{item.value || '—'}</p>{item.field && item.value && <button onClick={() => copyToClipboard(item.value, item.field)} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === item.field ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}</div></div></div>
               ))}
-              {isWatching(viewingClient) && (<div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-red-500/10"><Tv size={18} className="text-red-400" /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Status Ao Vivo</p><p className="text-sm text-red-400 font-medium">📺 Assistindo agora</p></div></div>)}
               {viewingClient.notes && (<div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><StickyNote size={18} className="text-yellow-400" /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Observações</p><p className={`text-sm ${textColor}`}>{viewingClient.notes}</p></div></div>)}
               <div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}><div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Status</p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>{getStatusText(viewingClient.status)}</span></div></div>
             </div>
