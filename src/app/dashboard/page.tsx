@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -303,7 +304,17 @@ export default function DashboardPage() {
                   <tbody>
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
-                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span></td>
+                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{c.contato && (
+  <a
+    href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`}
+    target="_blank"
+    onClick={e => e.stopPropagation()}
+    className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"
+    title="WhatsApp"
+  >
+    <MessageCircle size={14} />
+  </a>
+)}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
