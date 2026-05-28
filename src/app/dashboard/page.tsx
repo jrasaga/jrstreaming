@@ -74,11 +74,20 @@ export default function DashboardPage() {
   };
 
   const getOnlineStatus = (client: Client) => {
-    if (!client.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-    const diffSeconds = (Date.now() - new Date(client.lastHeartbeat).getTime()) / 1000;
-    if (diffSeconds < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
-    return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-  };
+  if (!client.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
+  
+  let lastTime: number;
+  if (typeof client.lastHeartbeat === 'object' && (client.lastHeartbeat as any)._seconds) {
+    lastTime = (client.lastHeartbeat as any)._seconds * 1000;
+  } else {
+    lastTime = new Date(client.lastHeartbeat as string).getTime();
+  }
+  
+  const diffSeconds = (Date.now() - lastTime) / 1000;
+  
+  if (diffSeconds < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
+  return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
+};
 
   const getLastSeenText = (lastSeen: string) => {
     if (!lastSeen) return 'Nunca';
