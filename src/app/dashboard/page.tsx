@@ -19,7 +19,7 @@ interface Client {
   lastSeen: string;
   notes: string;
   watching: boolean;
-  lastHeartbeat: string;
+  lastHeartbeat: any;
 }
 
 export default function DashboardPage() {
