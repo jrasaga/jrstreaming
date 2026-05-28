@@ -1,9 +1,8 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, User, Pencil, Trash2, ToggleLeft, ToggleRight, Plus } from 'lucide-react';
+import { ArrowLeft, Clock, User, Pencil, Trash2, ToggleLeft, ToggleRight, Plus, Search } from 'lucide-react';
 
 interface LogEntry {
   id: string;
@@ -15,6 +14,7 @@ interface LogEntry {
 
 export default function LogsPage() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [darkMode, setDarkMode] = useState(true);
   const router = useRouter();
 
@@ -35,6 +35,12 @@ export default function LogsPage() {
       setLogs(JSON.parse(stored));
     }
   };
+
+  const filteredLogs = logs.filter(log =>
+    log.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (log.details && log.details.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   const getActionIcon = (action: string) => {
     switch (action) {
@@ -81,6 +87,8 @@ export default function LogsPage() {
   const textColor = darkMode ? 'text-white' : 'text-gray-900';
   const textGray = darkMode ? 'text-gray-400' : 'text-gray-500';
   const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
+  const inputBg = darkMode ? 'bg-gray-700' : 'bg-gray-50';
+  const inputBorder = darkMode ? 'border-gray-600' : 'border-gray-300';
 
   return (
     <div className={`min-h-screen ${bgColor} p-4 lg:p-8`}>
@@ -105,15 +113,34 @@ export default function LogsPage() {
           )}
         </div>
 
+        {logs.length > 0 && (
+          <div className="relative mb-6">
+            <Search size={18} className={`absolute left-3 top-1/2 -translate-y-1/2 ${textGray}`} />
+            <input
+              type="text"
+              placeholder="Buscar por cliente ou ação..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className={`w-full pl-10 pr-4 py-2 ${inputBg} border ${inputBorder} rounded-xl ${textColor} placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all text-sm`}
+            />
+          </div>
+        )}
+
         {logs.length === 0 ? (
           <div className={`${cardBg} rounded-xl p-12 border ${borderColor} text-center`}>
             <Clock size={48} className="mx-auto mb-4 text-gray-500 opacity-50" />
             <p className={`text-lg ${textGray}`}>Nenhuma atividade registrada</p>
             <p className={`text-sm ${textGray} mt-1`}>As ações realizadas nos clientes aparecerão aqui</p>
           </div>
+        ) : filteredLogs.length === 0 ? (
+          <div className={`${cardBg} rounded-xl p-12 border ${borderColor} text-center`}>
+            <Search size={48} className="mx-auto mb-4 text-gray-500 opacity-50" />
+            <p className={`text-lg ${textGray}`}>Nenhum resultado encontrado</p>
+            <p className={`text-sm ${textGray} mt-1`}>Tente outro termo de busca</p>
+          </div>
         ) : (
           <div className="space-y-2">
-            {logs.map((log, index) => (
+            {filteredLogs.map((log, index) => (
               <div
                 key={index}
                 className={`${cardBg} rounded-xl p-4 border ${borderColor} flex items-center gap-4 hover:bg-gray-700/30 transition-colors`}
