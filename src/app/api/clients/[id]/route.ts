@@ -9,7 +9,7 @@ export async function PUT(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { deviceId, name, mac, serverUrl, username, password, userAgent, status, validade, contato } = body;
+    const { deviceId, name, mac, serverUrl, username, password, userAgent, status, validade, contato, notes } = body;
 
     await db.collection('clients').doc(id).update({
       deviceId,
@@ -22,6 +22,7 @@ export async function PUT(
       status,
       validade,
       contato: contato || '',
+      notes: notes || '',
       updatedAt: new Date()
     });
 
