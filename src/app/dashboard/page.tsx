@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
-import { MessageCircle } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -18,6 +17,7 @@ interface Client {
   validade: string;
   contato: string;
   lastSeen: string;
+  notes: string;
 }
 
 export default function DashboardPage() {
@@ -48,7 +48,8 @@ export default function DashboardPage() {
     userAgent: '',
     status: 'active',
     validade: '',
-    contato: ''
+    contato: '',
+    notes: ''
   });
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -95,8 +96,8 @@ export default function DashboardPage() {
   };
 
   const exportToCSV = () => {
-    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Último Acesso'];
-    const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, getLastSeenText(c.lastSeen)]);
+    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Observações', 'Último Acesso'];
+    const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, c.notes, getLastSeenText(c.lastSeen)]);
     const csvContent = [headers, ...csvData].map(r => r.join(',')).join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -133,9 +134,9 @@ export default function DashboardPage() {
 
   const handleLogout = () => { localStorage.removeItem('admin_logged'); localStorage.removeItem('admin_token'); router.push('/login'); };
 
-  const openNewModal = () => { setEditingClient(null); setFormData({ deviceId: '', name: '', mac: '', serverUrl: '', username: '', password: '', userAgent: '', status: 'active', validade: '', contato: '' }); setModalOpen(true); };
+  const openNewModal = () => { setEditingClient(null); setFormData({ deviceId: '', name: '', mac: '', serverUrl: '', username: '', password: '', userAgent: '', status: 'active', validade: '', contato: '', notes: '' }); setModalOpen(true); };
 
-  const openEditModal = (c: Client) => { setViewingClient(null); setEditingClient(c); setFormData({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl || '', username: c.username || '', password: c.password || '', userAgent: c.userAgent || '', status: c.status, validade: c.validade, contato: c.contato || '' }); setModalOpen(true); };
+  const openEditModal = (c: Client) => { setViewingClient(null); setEditingClient(c); setFormData({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl || '', username: c.username || '', password: c.password || '', userAgent: c.userAgent || '', status: c.status, validade: c.validade, contato: c.contato || '', notes: c.notes || '' }); setModalOpen(true); };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -154,7 +155,7 @@ export default function DashboardPage() {
   const toggleStatus = async (c: Client) => {
     const ns = c.status === 'active' ? 'blocked' : 'active';
     try {
-      const r = await fetch(`/api/clients/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl, username: c.username, password: c.password, userAgent: c.userAgent, status: ns, validade: c.validade, contato: c.contato }) });
+      const r = await fetch(`/api/clients/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl, username: c.username, password: c.password, userAgent: c.userAgent, status: ns, validade: c.validade, contato: c.contato, notes: c.notes }) });
       if (!r.ok) throw new Error('Erro');
       showToast(`Cliente ${ns === 'active' ? 'ativado' : 'bloqueado'}!`);
       addLog(ns === 'active' ? 'activated' : 'blocked', c.name);
@@ -185,7 +186,7 @@ export default function DashboardPage() {
   };
 
   const filteredClients = clients.filter(c => {
-    const ms = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.username.toLowerCase().includes(searchTerm.toLowerCase()) || c.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) || c.mac.toLowerCase().includes(searchTerm.toLowerCase()) || c.contato.toLowerCase().includes(searchTerm.toLowerCase());
+    const ms = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.username.toLowerCase().includes(searchTerm.toLowerCase()) || c.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) || c.mac.toLowerCase().includes(searchTerm.toLowerCase()) || c.contato.toLowerCase().includes(searchTerm.toLowerCase()) || (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase()));
     return ms && (statusFilter === 'all' || c.status === statusFilter);
   });
 
@@ -304,17 +305,7 @@ export default function DashboardPage() {
                   <tbody>
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
-                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{c.contato && (
-  <a
-    href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`}
-    target="_blank"
-    onClick={e => e.stopPropagation()}
-    className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"
-    title="WhatsApp"
-  >
-    <MessageCircle size={14} />
-  </a>
-)}</td>
+                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{c.notes && <StickyNote size={14} className="inline ml-2 text-yellow-400" title={c.notes} />}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300" title="WhatsApp"><MessageCircle size={14} /></a>}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
@@ -381,6 +372,12 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+              {viewingClient.notes && (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-yellow-500/10"><StickyNote size={18} className="text-yellow-400" /></div>
+                  <div className="flex-1"><p className={`text-xs ${textGray}`}>Observações</p><p className={`text-sm ${textColor}`}>{viewingClient.notes}</p></div>
+                </div>
+              )}
               <div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}><div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Status</p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>{getStatusText(viewingClient.status)}</span></div></div>
             </div>
             <div className={`p-4 border-t ${borderColor} flex gap-3`}><button onClick={() => openEditModal(viewingClient)} className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium"><Pencil size={16} />Editar</button><button onClick={() => setViewingClient(null)} className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 ${inputBg} border ${inputBorder} ${textColor} rounded-xl text-sm font-medium ${hoverBg}`}><XCircle size={16} />Fechar</button></div>
@@ -416,6 +413,7 @@ export default function DashboardPage() {
                 <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label><input type="date" value={formData.validade} onChange={e => setFormData({...formData, validade: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div>
               </div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input type="text" value={formData.contato} onChange={e => setFormData({...formData, contato: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="WhatsApp, telefone..." /></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Observações</label><textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={3} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500 resize-none`} placeholder="Notas sobre o cliente..." /></div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">Cancelar</button><button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg">{editingClient ? 'Salvar' : 'Adicionar'}</button></div>
             </form>
           </div>
