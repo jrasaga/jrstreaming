@@ -91,9 +91,14 @@ export default function DashboardPage() {
   const exportToCSV = () => {
     const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Observações', 'Último Acesso'];
     const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, c.notes, getLastSeenText(c.lastSeen)]);
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob); link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`; link.click(); showToast('Clientes exportados!');
-  };
+    const csvContent = [headers, ...csvData].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    showToast('Clientes exportados!');
+};
 
   const backupData = () => {
     const backup = { version: '1.0', date: new Date().toISOString(), clients: clients.map(({ id, ...rest }) => rest), logs: JSON.parse(localStorage.getItem('activity_logs') || '[]') };
