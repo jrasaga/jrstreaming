@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload, Tv } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -18,6 +18,8 @@ interface Client {
   contato: string;
   lastSeen: string;
   notes: string;
+  watching: boolean;
+  lastHeartbeat: string;
 }
 
 export default function DashboardPage() {
@@ -87,6 +89,12 @@ export default function DashboardPage() {
     return diffMinutes < 5;
   };
 
+  const isWatching = (client: Client) => {
+    if (!client.watching || !client.lastHeartbeat) return false;
+    const diffSeconds = (Date.now() - new Date(client.lastHeartbeat).getTime()) / 1000;
+    return diffSeconds < 90;
+  };
+
   const getLastSeenText = (lastSeen: string) => {
     if (!lastSeen) return 'Nunca';
     const diffMinutes = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 60000);
@@ -134,21 +142,10 @@ export default function DashboardPage() {
         const text = await file.text();
         const backup = JSON.parse(text);
         if (!backup.clients || !Array.isArray(backup.clients)) return showToast('Arquivo inválido', 'error');
-        
         if (!confirm(`Importar ${backup.clients.length} clientes? Isso substituirá os dados atuais!`)) return;
-        
-        for (const c of clients) {
-          await fetch(`/api/clients/${c.id}`, { method: 'DELETE' });
-        }
-        
-        for (const c of backup.clients) {
-          await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
-        }
-        
-        if (backup.logs) {
-          localStorage.setItem('activity_logs', JSON.stringify(backup.logs));
-        }
-        
+        for (const c of clients) { await fetch(`/api/clients/${c.id}`, { method: 'DELETE' }); }
+        for (const c of backup.clients) { await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) }); }
+        if (backup.logs) { localStorage.setItem('activity_logs', JSON.stringify(backup.logs)); }
         showToast('Dados restaurados!');
         loadClients();
       } catch { showToast('Erro ao importar', 'error'); }
@@ -396,7 +393,7 @@ export default function DashboardPage() {
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
                     <th onClick={() => handleSort('status')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white hidden md:table-cell`}><div className="flex items-center gap-1">Status{sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
-                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>Online</th>
+                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>Ao Vivo</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                   </tr></thead>
                   <tbody>
@@ -409,7 +406,17 @@ export default function DashboardPage() {
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 hidden xl:table-cell">{(() => { const info = getExpiryInfo(c.validade, c.status); return <div><span className={info.color}>{info.text}</span><p className="text-xs text-gray-500">{new Date(c.validade).toLocaleDateString('pt-BR')}</p></div>; })()}</td>
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>{getStatusText(c.status)}</span></td>
-                        <td className="p-3 lg:p-4 hidden lg:table-cell" onClick={e => e.stopPropagation()}><div className="flex items-center gap-2"><div className={`w-2 h-2 rounded-full ${isOnline(c.lastSeen) ? 'bg-emerald-400 animate-pulse' : 'bg-gray-500'}`}></div><span className={`text-xs ${textGray}`}>{getLastSeenText(c.lastSeen)}</span></div></td>
+                        <td className="p-3 lg:p-4 hidden lg:table-cell" onClick={e => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            {isWatching(c) ? (
+                              <><div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div><span className="text-xs text-red-400 font-medium">Assistindo</span></>
+                            ) : isOnline(c.lastSeen) ? (
+                              <><div className="w-2 h-2 rounded-full bg-emerald-400"></div><span className={`text-xs ${textGray}`}>Online</span></>
+                            ) : (
+                              <><div className="w-2 h-2 rounded-full bg-gray-500"></div><span className={`text-xs ${textGray}`}>Offline</span></>
+                            )}
+                          </div>
+                        </td>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}>
                           <div className="flex gap-1 lg:gap-2">
                             <button onClick={() => toggleStatus(c)} className={`p-1.5 lg:p-2 rounded-lg ${c.status === 'active' ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-red-400 hover:bg-red-400/10'}`}>{c.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}</button>
@@ -470,6 +477,12 @@ export default function DashboardPage() {
                   </div>
                 </div>
               ))}
+              {isWatching(viewingClient) && (
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-red-500/10"><Tv size={18} className="text-red-400" /></div>
+                  <div className="flex-1"><p className={`text-xs ${textGray}`}>Status Ao Vivo</p><p className="text-sm text-red-400 font-medium">📺 Assistindo agora</p></div>
+                </div>
+              )}
               {viewingClient.notes && (
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-yellow-500/10"><StickyNote size={18} className="text-yellow-400" /></div>
