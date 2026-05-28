@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -107,6 +107,53 @@ export default function DashboardPage() {
     link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     showToast('Clientes exportados!');
+  };
+
+  const backupData = () => {
+    const backup = {
+      version: '1.0',
+      date: new Date().toISOString(),
+      clients: clients.map(({ id, ...rest }) => rest),
+      logs: JSON.parse(localStorage.getItem('activity_logs') || '[]')
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `backup_jr_${new Date().toISOString().split('T')[0]}.json`;
+    link.click();
+    showToast('Backup criado!');
+  };
+
+  const restoreData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e: any) => {
+      try {
+        const file = e.target.files[0];
+        const text = await file.text();
+        const backup = JSON.parse(text);
+        if (!backup.clients || !Array.isArray(backup.clients)) return showToast('Arquivo inválido', 'error');
+        
+        if (!confirm(`Importar ${backup.clients.length} clientes? Isso substituirá os dados atuais!`)) return;
+        
+        for (const c of clients) {
+          await fetch(`/api/clients/${c.id}`, { method: 'DELETE' });
+        }
+        
+        for (const c of backup.clients) {
+          await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
+        }
+        
+        if (backup.logs) {
+          localStorage.setItem('activity_logs', JSON.stringify(backup.logs));
+        }
+        
+        showToast('Dados restaurados!');
+        loadClients();
+      } catch { showToast('Erro ao importar', 'error'); }
+    };
+    input.click();
   };
 
   const getExpiryInfo = (validade: string, status: string) => {
@@ -277,6 +324,8 @@ export default function DashboardPage() {
               <button onClick={() => window.location.reload()} className="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 rounded-xl w-full text-left"><Users size={20} /><span className="font-medium">Clientes</span></button>
               <a href="/dashboard/estatisticas" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><BarChart3 size={20} /><span>Estatísticas</span></a>
               <a href="/dashboard/logs" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><ScrollText size={20} /><span>Logs</span></a>
+              <a href="#" onClick={e => { e.preventDefault(); backupData(); }} className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><Download size={20} /><span>Backup</span></a>
+              <a href="#" onClick={e => { e.preventDefault(); restoreData(); }} className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><Upload size={20} /><span>Restaurar</span></a>
             </nav>
           </div>
           <div className={`absolute bottom-0 left-0 right-0 p-6 border-t ${borderColor}`}>
