@@ -36,6 +36,8 @@ export default function DashboardPage() {
   const [fullscreen, setFullscreen] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<Client | null>(null);
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set());
+  const [selectAll, setSelectAll] = useState(false);
   const router = useRouter();
 
   const [formData, setFormData] = useState({
@@ -117,6 +119,41 @@ export default function DashboardPage() {
     if (diffDays === 0) return { text: 'Expira hoje', color: 'text-amber-400' };
     if (diffDays <= 7) return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
     return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
+  };
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedClients);
+    if (newSet.has(id)) newSet.delete(id); else newSet.add(id);
+    setSelectedClients(newSet);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); }
+    else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); }
+  };
+
+  const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
+    if (selectedClients.size === 0) return showToast('Nenhum cliente selecionado', 'error');
+    const msg = action === 'delete' ? `Excluir ${selectedClients.size} clientes?` : `${action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`;
+    if (!confirm(msg)) return;
+    for (const id of selectedClients) {
+      try {
+        if (action === 'delete') {
+          await fetch(`/api/clients/${id}`, { method: 'DELETE' });
+          addLog('deleted', clients.find(c => c.id === id)?.name || id);
+        } else {
+          const status = action === 'activate' ? 'active' : 'blocked';
+          const c = clients.find(cl => cl.id === id);
+          if (!c) continue;
+          await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status }) });
+          addLog(status === 'active' ? 'activated' : 'blocked', c.name);
+        }
+      } catch {}
+    }
+    showToast('Ação concluída!');
+    setSelectedClients(new Set());
+    setSelectAll(false);
+    loadClients();
   };
 
   useEffect(() => {
@@ -287,12 +324,23 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {selectedClients.size > 0 && (
+              <div className="flex items-center gap-3 p-3 bg-blue-600/10 border-b border-blue-600/20">
+                <span className={`text-sm ${textColor} font-medium`}>{selectedClients.size} selecionados</span>
+                <button onClick={() => bulkAction('activate')} className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-xs">Ativar</button>
+                <button onClick={() => bulkAction('block')} className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs">Bloquear</button>
+                <button onClick={() => bulkAction('delete')} className="px-3 py-1 bg-red-700 text-white rounded-lg text-xs">Excluir</button>
+                <button onClick={() => { setSelectedClients(new Set()); setSelectAll(false); }} className="px-3 py-1 bg-gray-600 text-white rounded-lg text-xs">Limpar</button>
+              </div>
+            )}
+
             <div className="overflow-x-auto">
               {sortedClients.length === 0 ? (
                 <div className="text-center py-12 text-gray-400"><Users size={48} className="mx-auto mb-4 opacity-50" /><p>{searchTerm ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado ainda'}</p></div>
               ) : (
                 <table className="w-full">
                   <thead><tr className={`border-b ${borderColor}`}>
+                    <th className="p-3 lg:p-4 w-10"><input type="checkbox" checked={selectAll} onChange={toggleSelectAll} className="w-4 h-4 rounded border-gray-500 bg-gray-700" /></th>
                     <th onClick={() => handleSort('name')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white`}><div className="flex items-center gap-1">Nome{sortField === 'name' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
                     <th onClick={() => handleSort('username')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white hidden sm:table-cell`}><div className="flex items-center gap-1">Usuário{sortField === 'username' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Device ID</th>
@@ -305,6 +353,7 @@ export default function DashboardPage() {
                   <tbody>
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
+                        <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedClients.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded border-gray-500 bg-gray-700" /></td>
                         <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300" title="WhatsApp"><MessageCircle size={14} /></a>}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
