@@ -295,9 +295,26 @@ export default function DashboardPage() {
           <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-md overflow-hidden shadow-2xl`} onClick={e => e.stopPropagation()}>
             <div className={`p-6 border-b ${borderColor} flex items-center justify-between`}><div className="flex items-center gap-3"><div className={`w-3 h-3 rounded-full ${getStatusDot(viewingClient.status)} animate-pulse`} /><h3 className={`text-lg font-semibold ${textColor}`}>{viewingClient.name}</h3></div><button onClick={() => setViewingClient(null)} className={`p-1.5 rounded-lg ${hoverBg} ${textGray} hover:text-red-400`}><XCircle size={20} /></button></div>
             <div className="p-6 space-y-4">
-              {[{ icon: Smartphone, color: 'blue', label: 'Device ID', value: viewingClient.deviceId, field: 'view-device' }, { icon: Monitor, color: 'purple', label: 'MAC Address', value: viewingClient.mac, field: 'view-mac' }, { icon: Globe, color: 'cyan', label: 'URL do Servidor', value: viewingClient.serverUrl, field: 'view-url' }, { icon: Wifi, color: 'emerald', label: 'Usuário / Senha', value: `${viewingClient.username || '—'} / ${viewingClient.password || '—'}`, field: '' }, { icon: MonitorSmartphone, color: 'indigo', label: 'User-Agent', value: viewingClient.userAgent, field: 'view-useragent' }, { icon: Calendar, color: 'amber', label: 'Validade', value: new Date(viewingClient.validade).toLocaleDateString('pt-BR'), field: '' }, { icon: Phone, color: 'rose', label: 'Contato', value: viewingClient.contato, field: 'view-contato' }].map((item, i) => (
-                <div key={i} className="flex items-center gap-3"><div className={`p-2 rounded-lg bg-${item.color}-500/10`}><item.icon size={18} className={`text-${item.color}-400`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>{item.label}</p><div className="flex items-center gap-2"><p className={`text-sm ${item.field ? 'font-mono' : ''} ${textColor} ${item.label === 'URL do Servidor' || item.label === 'User-Agent' ? 'break-all' : ''}`}>{item.value || '—'}</p>{item.field && item.value && <button onClick={() => copyToClipboard(item.value, item.field)} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === item.field ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}</div></div></div>
-              ))}
+              {[
+  { icon: Smartphone, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Device ID', value: viewingClient.deviceId, field: 'view-device' },
+  { icon: Monitor, color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'MAC Address', value: viewingClient.mac, field: 'view-mac' },
+  { icon: Globe, color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'URL do Servidor', value: viewingClient.serverUrl, field: 'view-url' },
+  { icon: Wifi, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Usuário / Senha', value: `${viewingClient.username || '—'} / ${viewingClient.password || '—'}`, field: '' },
+  { icon: MonitorSmartphone, color: 'text-indigo-400', bg: 'bg-indigo-500/10', label: 'User-Agent', value: viewingClient.userAgent, field: 'view-useragent' },
+  { icon: Calendar, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Validade', value: new Date(viewingClient.validade).toLocaleDateString('pt-BR'), field: '' },
+  { icon: Phone, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Contato', value: viewingClient.contato, field: 'view-contato' }
+].map((item, i) => (
+  <div key={i} className="flex items-center gap-3">
+    <div className={`p-2 rounded-lg ${item.bg}`}><item.icon size={18} className={item.color} /></div>
+    <div className="flex-1">
+      <p className={`text-xs ${textGray}`}>{item.label}</p>
+      <div className="flex items-center gap-2">
+        <p className={`text-sm ${item.field ? 'font-mono' : ''} ${textColor} ${item.label === 'URL do Servidor' || item.label === 'User-Agent' ? 'break-all' : ''}`}>{item.value || '—'}</p>
+        {item.field && item.value && <button onClick={() => copyToClipboard(item.value, item.field)} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === item.field ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
+      </div>
+    </div>
+  </div>
+))}
               {viewingClient.notes && (<div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><StickyNote size={18} className="text-yellow-400" /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Observações</p><p className={`text-sm ${textColor}`}>{viewingClient.notes}</p></div></div>)}
               <div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}><div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Status</p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>{getStatusText(viewingClient.status)}</span></div></div>
             </div>
