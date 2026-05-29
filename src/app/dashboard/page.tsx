@@ -156,7 +156,14 @@ export default function DashboardPage() {
     showToast('Ação concluída!'); setSelectedClients(new Set()); setSelectAll(false); loadClients();
   };
 
-  useEffect(() => { if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; } loadClients(); const t = localStorage.getItem('theme'); if (t) setDarkMode(t === 'dark'); }, []);
+  useEffect(() => {
+  if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; }
+  loadClients();
+  const t = localStorage.getItem('theme');
+  if (t) setDarkMode(t === 'dark');
+  const interval = setInterval(() => loadClients(), 10000);
+  return () => clearInterval(interval);
+}, []);
   useEffect(() => { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
   const loadClients = async () => { try { const r = await fetch('/api/clients'); setClients(await r.json()); } catch (e) {} };
   const handleLogout = () => { localStorage.removeItem('admin_logged'); localStorage.removeItem('admin_token'); router.push('/login'); };
