@@ -356,11 +356,12 @@ const formatPhone = (value: string) => {
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Usuário</label><input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Senha</label><input type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div></div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label><input type="text" value={formData.userAgent} onChange={e => setFormData({...formData, userAgent: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="Ex: Mozilla/5.0..." /></div>
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Status</label><select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}><option value="active">Ativo</option><option value="blocked">Bloqueado</option><option value="expired">Expirado</option></select></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label><input type="date" value={formData.validade} onChange={e => setFormData({...formData, validade: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div></div>
-              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label>
+              <input
   type="text"
   value={formData.contato}
   onChange={e => setFormData({...formData, contato: formatPhone(e.target.value)})}
-  className={`...`}
+  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
   placeholder="(81)9.9999-9999"
   maxLength={15}
 /></div>
