@@ -197,6 +197,14 @@ export default function DashboardPage() {
   const textColor = darkMode ? 'text-white' : 'text-gray-900'; const textGray = darkMode ? 'text-gray-400' : 'text-gray-500'; const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
   const inputBg = darkMode ? 'bg-gray-700' : 'bg-gray-50'; const inputBorder = darkMode ? 'border-gray-600' : 'border-gray-300'; const hoverBg = darkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50';
 
+const formatPhone = (value: string) => {
+  const numbers = value.replace(/\D/g, '');
+  if (numbers.length <= 2) return numbers.length ? `(${numbers}` : '';
+  if (numbers.length <= 7) return `(${numbers.slice(0, 2)})${numbers.slice(2)}`;
+  if (numbers.length <= 11) return `(${numbers.slice(0, 2)})${numbers.slice(2, 7)}-${numbers.slice(7)}`;
+  return `(${numbers.slice(0, 2)})${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
+};
+
   return (
     <div className={`min-h-screen ${bgColor} flex transition-colors duration-200`}>
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
@@ -348,7 +356,14 @@ export default function DashboardPage() {
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Usuário</label><input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Senha</label><input type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div></div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label><input type="text" value={formData.userAgent} onChange={e => setFormData({...formData, userAgent: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="Ex: Mozilla/5.0..." /></div>
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Status</label><select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}><option value="active">Ativo</option><option value="blocked">Bloqueado</option><option value="expired">Expirado</option></select></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label><input type="date" value={formData.validade} onChange={e => setFormData({...formData, validade: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div></div>
-              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input type="text" value={formData.contato} onChange={e => setFormData({...formData, contato: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="WhatsApp, telefone..." /></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input
+  type="text"
+  value={formData.contato}
+  onChange={e => setFormData({...formData, contato: formatPhone(e.target.value)})}
+  className={`...`}
+  placeholder="(81)9.9999-9999"
+  maxLength={15}
+/></div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Observações</label><textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={3} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500 resize-none`} placeholder="Notas sobre o cliente..." /></div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">Cancelar</button><button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg">{editingClient ? 'Salvar' : 'Adicionar'}</button></div>
             </form>
