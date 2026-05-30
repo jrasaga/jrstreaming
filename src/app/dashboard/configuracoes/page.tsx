@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Smartphone } from 'lucide-react';
+import { ArrowLeft, Save, Smartphone, Check } from 'lucide-react';
 
 export default function ConfiguracoesPage() {
   const [darkMode, setDarkMode] = useState(true);
   const [versionCode, setVersionCode] = useState('25');
-  const [versionName, setVersionName] = useState('1.0.0');
   const [downloadUrl, setDownloadUrl] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [saved, setSaved] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -17,19 +18,38 @@ export default function ConfiguracoesPage() {
     const t = localStorage.getItem('theme');
     if (t) setDarkMode(t === 'dark');
     
-    const saved = localStorage.getItem('update_config');
-    if (saved) {
-      const config = JSON.parse(saved);
-      setVersionCode(config.versionCode || '25');
-      setVersionName(config.versionName || '1.0.0');
-      setDownloadUrl(config.downloadUrl || '');
-    }
+    loadSettings();
   }, []);
 
-  const saveConfig = () => {
-    const config = { versionCode, versionName, downloadUrl };
-    localStorage.setItem('update_config', JSON.stringify(config));
-    alert('Configurações salvas!');
+  const loadSettings = async () => {
+    try {
+      const doc = await (await import('@/lib/firebase')).db.collection('settings').doc('update').get();
+      if (doc.exists) {
+        const data = doc.data();
+        setVersionCode(String(data?.versionCode || '25'));
+        setDownloadUrl(data?.downloadUrl || '');
+      }
+    } catch (error) {}
+  };
+
+  const saveConfig = async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageName: 'com.jr.streaming',
+          versionCode,
+          downloadUrl
+        })
+      });
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      alert('Erro ao salvar');
+    }
+    setLoading(false);
   };
 
   const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
@@ -71,18 +91,7 @@ export default function ConfiguracoesPage() {
                 className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor}`}
                 placeholder="Ex: 25"
               />
-              <p className={`text-xs ${textGray} mt-1`}>Deve ser maior que o versionCode atual do APK</p>
-            </div>
-
-            <div>
-              <label className={`block text-sm font-medium ${textGray} mb-1`}>Version Name</label>
-              <input
-                type="text"
-                value={versionName}
-                onChange={(e) => setVersionName(e.target.value)}
-                className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor}`}
-                placeholder="Ex: 4.14.5"
-              />
+              <p className={`text-xs ${textGray} mt-1`}>Deve ser maior que o versionCode atual do APK (24)</p>
             </div>
 
             <div>
@@ -98,10 +107,11 @@ export default function ConfiguracoesPage() {
 
             <button
               onClick={saveConfig}
-              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-xl font-medium"
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-3 rounded-xl font-medium disabled:opacity-50"
             >
-              <Save size={18} />
-              Salvar Configurações
+              {saved ? <Check size={18} /> : <Save size={18} />}
+              {saved ? 'Salvo!' : loading ? 'Salvando...' : 'Salvar Configurações'}
             </button>
           </div>
         </div>
