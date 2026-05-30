@@ -7,11 +7,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Package name não informado' }, { status: 400 });
   }
 
-  // Configuração da atualização
   const updateInfo = {
     packageName: 'com.jr.streaming',
-    versionCode: 25, // Aumente este número quando tiver uma nova versão
-    url: 'https://www.dropbox.com/scl/fi/fav0isv9zrrutoldxt7mc/jrstreaming25.apk?rlkey=nkwrh2dvbczufcv6y6lq4ixje&st=zix7gd47&dl=1' // URL do novo APK
+    versionCode: 25,
+    url: 'https://www.dropbox.com/scl/fi/i43cm1830l2l6trk42tva/jrstreaming.apk?rlkey=g53j00cglo4typbgtg06rmyw5&dl=1'
   };
 
   return NextResponse.json(updateInfo);
