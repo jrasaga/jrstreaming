@@ -116,6 +116,20 @@ export default function DashboardPage() {
     };
     input.click();
   };
+  
+  const toggleSelect = (id: string) => { const ns = new Set(selectedClients); ns.has(id) ? ns.delete(id) : ns.add(id); setSelectedClients(ns); };
+const toggleSelectAll = () => { if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); } else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); } };
+const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
+  if (selectedClients.size === 0) return showToast('Nenhum selecionado', 'error');
+  if (!confirm(`${action === 'delete' ? 'Excluir' : action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`)) return;
+  for (const id of selectedClients) {
+    try {
+      if (action === 'delete') { await fetch(`/api/clients/${id}`, { method: 'DELETE' }); addLog('deleted', clients.find(c => c.id === id)?.name || id); }
+      else { const s = action === 'activate' ? 'active' : 'blocked'; const c = clients.find(cl => cl.id === id); if (!c) continue; await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status: s }) }); addLog(s === 'active' ? 'activated' : 'blocked', c.name); }
+    } catch {}
+  }
+  showToast('Ação concluída!'); setSelectedClients(new Set()); setSelectAll(false); loadClients();
+};
 
   useEffect(() => {
     if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; }
