@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const updateInfo = {
     packageName: 'com.jr.streaming',
     versionCode: 25, // Aumente este número quando tiver uma nova versão
-    url: 'https://www.dropbox.com/scl/fi/wkcybny2u95ydjr4kz1wq/jrstreaming.apk?rlkey=zxo1ck6dnk4m0fpc5hvna1gd4&dl=1' // URL do novo APK
+    url: 'https://www.dropbox.com/scl/fi/fav0isv9zrrutoldxt7mc/jrstreaming25.apk?rlkey=nkwrh2dvbczufcv6y6lq4ixje&st=zix7gd47&dl=1' // URL do novo APK
   };
 
   return NextResponse.json(updateInfo);
