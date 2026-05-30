@@ -18,6 +18,7 @@ interface Client {
   contato: string;
   lastSeen: any;
   notes: string;
+  online: boolean;
 }
 
 export default function DashboardPage() {
@@ -61,6 +62,8 @@ export default function DashboardPage() {
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text).then(() => { setCopiedField(field); showToast('Copiado!'); setTimeout(() => setCopiedField(null), 2000); });
   };
+
+  const isOnline = (c: Client) => c.online === true;
 
   const getExpiryInfo = (validade: string, status: string) => {
     if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
@@ -122,6 +125,8 @@ export default function DashboardPage() {
     loadClients();
     const t = localStorage.getItem('theme');
     if (t) setDarkMode(t === 'dark');
+    const interval = setInterval(() => loadClients(), 30000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
@@ -224,6 +229,7 @@ export default function DashboardPage() {
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
                     <th onClick={() => handleSort('status')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white hidden md:table-cell`}><div className="flex items-center gap-1">Status{sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
+                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Online</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                   </tr></thead>
                   <tbody>
@@ -236,6 +242,19 @@ export default function DashboardPage() {
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 hidden xl:table-cell">{(() => { const info = getExpiryInfo(c.validade, c.status); return <div><span className={info.color}>{info.text}</span><p className="text-xs text-gray-500">{new Date(c.validade).toLocaleDateString('pt-BR')}</p></div>; })()}</td>
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>{getStatusText(c.status)}</span></td>
+                        <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}>
+                          {isOnline(c) ? (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                              <span className="text-xs text-emerald-400 font-medium">Online</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <div className="w-2 h-2 rounded-full bg-gray-500"></div>
+                              <span className="text-xs text-gray-400">Offline</span>
+                            </div>
+                          )}
+                        </td>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><div className="flex gap-1 lg:gap-2"><button onClick={() => toggleStatus(c)} className={`p-1.5 lg:p-2 rounded-lg ${c.status === 'active' ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-red-400 hover:bg-red-400/10'}`}>{c.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}</button><button onClick={() => openEditModal(c)} className="p-1.5 lg:p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg"><Pencil size={16} /></button><button onClick={e => { e.stopPropagation(); handleDelete(c); }} className="p-1.5 lg:p-2 text-red-400 hover:bg-red-400/10 rounded-lg"><Trash2 size={16} /></button></div></td>
                       </tr>
                     ))}
