@@ -23,9 +23,9 @@ export default function ConfiguracoesPage() {
 
   const loadSettings = async () => {
     try {
-      const doc = await (await import('@/lib/firebase')).db.collection('settings').doc('update').get();
-      if (doc.exists) {
-        const data = doc.data();
+      const res = await fetch('/api/settings');
+      if (res.ok) {
+        const data = await res.json();
         setVersionCode(String(data?.versionCode || '25'));
         setDownloadUrl(data?.downloadUrl || '');
       }
