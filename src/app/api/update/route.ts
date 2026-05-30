@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   // Configuração da atualização
   const updateInfo = {
     packageName: 'com.eaigo',
-    versionCode: 4.14.5, // Aumente este número quando tiver uma nova versão
+    versionCode: 25, // Aumente este número quando tiver uma nova versão
     url: 'https://jrstreaming.vercel.app/downloads/app.apk' // URL do novo APK
   };
 
