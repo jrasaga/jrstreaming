@@ -16,7 +16,7 @@ interface Client {
   status: string;
   validade: string;
   contato: string;
-  lastSeen: string;
+  lastSeen: any;
   notes: string;
   watching: boolean;
   lastHeartbeat: any;
@@ -43,17 +43,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    deviceId: '',
-    name: '',
-    mac: '',
-    serverUrl: '',
-    username: '',
-    password: '',
-    userAgent: '',
-    status: 'active',
-    validade: '',
-    contato: '',
-    notes: ''
+    deviceId: '', name: '', mac: '', serverUrl: '', username: '', password: '',
+    userAgent: '', status: 'active', validade: '', contato: '', notes: ''
   });
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -73,41 +64,36 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(text).then(() => { setCopiedField(field); showToast('Copiado!'); setTimeout(() => setCopiedField(null), 2000); });
   };
 
-  const getOnlineStatus = (client: Client) => {
-  if (!client.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-  
-  let lastTime: number;
-  if (typeof client.lastHeartbeat === 'object' && (client.lastHeartbeat as any)._seconds) {
-    lastTime = (client.lastHeartbeat as any)._seconds * 1000;
-  } else {
-    lastTime = new Date(client.lastHeartbeat as string).getTime();
-  }
-  
-  const diffSeconds = (Date.now() - lastTime) / 1000;
-  
-  if (diffSeconds < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
-  return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-};
+  const getOnlineStatus = (c: Client) => {
+    if (!c.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
+    let seconds = 0;
+    if (c.lastHeartbeat._seconds) { seconds = c.lastHeartbeat._seconds; }
+    else if (c.lastHeartbeat.seconds) { seconds = c.lastHeartbeat.seconds; }
+    else { try { seconds = Math.floor(new Date(c.lastHeartbeat).getTime() / 1000); } catch(e) { return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' }; } }
+    const now = Math.floor(Date.now() / 1000);
+    const diff = now - seconds;
+    if (diff < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
+    return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
+  };
 
-  const getLastSeenText = (lastSeen: string) => {
-    if (!lastSeen) return 'Nunca';
-    const diffMinutes = Math.floor((Date.now() - new Date(lastSeen).getTime()) / 60000);
-    if (diffMinutes < 1) return 'Agora'; if (diffMinutes < 60) return `Há ${diffMinutes} min`;
-    const diffHours = Math.floor(diffMinutes / 60); if (diffHours < 24) return `Há ${diffHours}h`;
-    return `Há ${Math.floor(diffHours / 24)} dias`;
+  const getExpiryInfo = (validade: string, status: string) => {
+    if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
+    const today = new Date(); today.setHours(0,0,0,0); const expiry = new Date(validade + 'T00:00:00');
+    if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
+    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / 86400000);
+    if (status === 'expired' || diffDays < 0) return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
+    if (diffDays === 0) return { text: 'Expira hoje', color: 'text-amber-400' };
+    if (diffDays <= 7) return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
+    return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
   };
 
   const exportToCSV = () => {
-    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Observações', 'Último Acesso'];
-    const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, c.notes, getLastSeenText(c.lastSeen)]);
+    const headers = ['Nome', 'Usuário', 'Senha', 'Device ID', 'MAC', 'URL Servidor', 'User-Agent', 'Status', 'Validade', 'Contato', 'Observações'];
+    const csvData = clients.map(c => [c.name, c.username, c.password, c.deviceId, c.mac, c.serverUrl, c.userAgent, c.status === 'active' ? 'Ativo' : c.status === 'blocked' ? 'Bloqueado' : 'Expirado', c.validade, c.contato, c.notes]);
     const csvContent = [headers, ...csvData].map(r => r.join(',')).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    showToast('Clientes exportados!');
-};
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob); link.download = `clientes_${new Date().toISOString().split('T')[0]}.csv`; link.click(); showToast('Clientes exportados!');
+  };
 
   const backupData = () => {
     const backup = { version: '1.0', date: new Date().toISOString(), clients: clients.map(({ id, ...rest }) => rest), logs: JSON.parse(localStorage.getItem('activity_logs') || '[]') };
@@ -131,58 +117,43 @@ export default function DashboardPage() {
     input.click();
   };
 
-  const getExpiryInfo = (validade: string, status: string) => {
-    if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
-    const today = new Date(); today.setHours(0,0,0,0); const expiry = new Date(validade + 'T00:00:00');
-    if (isNaN(expiry.getTime())) return { text: new Date(validade).toLocaleDateString('pt-BR'), color: 'text-gray-400' };
-    const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / 86400000);
-    if (status === 'expired' || diffDays < 0) return { text: `Expirado há ${Math.abs(diffDays)} dias`, color: 'text-red-400' };
-    if (diffDays === 0) return { text: 'Expira hoje', color: 'text-amber-400' };
-    if (diffDays <= 7) return { text: `Expira em ${diffDays} dias`, color: 'text-amber-400' };
-    return { text: `Expira em ${diffDays} dias`, color: 'text-gray-400' };
-  };
-
-  const toggleSelect = (id: string) => { const ns = new Set(selectedClients); ns.has(id) ? ns.delete(id) : ns.add(id); setSelectedClients(ns); };
-  const toggleSelectAll = () => { if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); } else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); } };
-  const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
-    if (selectedClients.size === 0) return showToast('Nenhum selecionado', 'error');
-    if (!confirm(`${action === 'delete' ? 'Excluir' : action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`)) return;
-    for (const id of selectedClients) {
-      try {
-        if (action === 'delete') { await fetch(`/api/clients/${id}`, { method: 'DELETE' }); addLog('deleted', clients.find(c => c.id === id)?.name || id); }
-        else { const s = action === 'activate' ? 'active' : 'blocked'; const c = clients.find(cl => cl.id === id); if (!c) continue; await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status: s }) }); addLog(s === 'active' ? 'activated' : 'blocked', c.name); }
-      } catch {}
-    }
-    showToast('Ação concluída!'); setSelectedClients(new Set()); setSelectAll(false); loadClients();
-  };
-
   useEffect(() => {
-  if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; }
-  loadClients();
-  const t = localStorage.getItem('theme');
-  if (t) setDarkMode(t === 'dark');
-  const interval = setInterval(() => loadClients(), 10000);
-  return () => clearInterval(interval);
-}, []);
+    if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; }
+    loadClients();
+    const t = localStorage.getItem('theme');
+    if (t) setDarkMode(t === 'dark');
+    const interval = setInterval(() => loadClients(), 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
+
   const loadClients = async () => { try { const r = await fetch('/api/clients'); setClients(await r.json()); } catch (e) {} };
+
   const handleLogout = () => { localStorage.removeItem('admin_logged'); localStorage.removeItem('admin_token'); router.push('/login'); };
+
   const openNewModal = () => { setEditingClient(null); setFormData({ deviceId: '', name: '', mac: '', serverUrl: '', username: '', password: '', userAgent: '', status: 'active', validade: '', contato: '', notes: '' }); setModalOpen(true); };
+
   const openEditModal = (c: Client) => { setViewingClient(null); setEditingClient(c); setFormData({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl || '', username: c.username || '', password: c.password || '', userAgent: c.userAgent || '', status: c.status, validade: c.validade, contato: c.contato || '', notes: c.notes || '' }); setModalOpen(true); };
+
   const handleSubmit = async (e: React.FormEvent) => { e.preventDefault(); try { const url = editingClient ? `/api/clients/${editingClient.id}` : '/api/clients'; const method = editingClient ? 'PUT' : 'POST'; const r = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) }); if (!r.ok) throw new Error('Erro'); showToast(editingClient ? 'Cliente atualizado!' : 'Cliente criado!'); addLog(editingClient ? 'updated' : 'created', formData.name); setModalOpen(false); loadClients(); } catch { showToast('Erro ao salvar', 'error'); } };
+
   const toggleStatus = async (c: Client) => { const ns = c.status === 'active' ? 'blocked' : 'active'; try { const r = await fetch(`/api/clients/${c.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ deviceId: c.deviceId, name: c.name, mac: c.mac, serverUrl: c.serverUrl, username: c.username, password: c.password, userAgent: c.userAgent, status: ns, validade: c.validade, contato: c.contato, notes: c.notes }) }); if (!r.ok) throw new Error('Erro'); showToast(`Cliente ${ns === 'active' ? 'ativado' : 'bloqueado'}!`); addLog(ns === 'active' ? 'activated' : 'blocked', c.name); loadClients(); } catch { showToast('Erro', 'error'); } };
+
   const handleDelete = (c: Client) => setDeleteModal(c);
   const confirmDelete = async () => { if (!deleteModal) return; try { const r = await fetch(`/api/clients/${deleteModal.id}`, { method: 'DELETE' }); if (r.ok) { setViewingClient(null); showToast('Cliente excluído!'); addLog('deleted', deleteModal.name); loadClients(); } } catch { showToast('Erro', 'error'); } setDeleteModal(null); };
 
   const getStatusColor = (s: string) => ({ active: 'bg-emerald-500/10 text-emerald-400', blocked: 'bg-red-500/10 text-red-400', expired: 'bg-amber-500/10 text-amber-400' }[s] || 'bg-gray-500/10 text-gray-400');
   const getStatusDot = (s: string) => ({ active: 'bg-emerald-400', blocked: 'bg-red-400', expired: 'bg-amber-400' }[s] || 'bg-gray-400');
   const getStatusText = (s: string) => ({ active: 'Ativo', blocked: 'Bloqueado', expired: 'Expirado' }[s] || s);
+
   const handleSort = (field: string) => { if (sortField === field) setSortDirection(d => d === 'asc' ? 'desc' : 'asc'); else { setSortField(field); setSortDirection('asc'); } setCurrentPage(1); };
 
   const filteredClients = clients.filter(c => { const ms = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || c.username.toLowerCase().includes(searchTerm.toLowerCase()) || c.deviceId.toLowerCase().includes(searchTerm.toLowerCase()) || c.mac.toLowerCase().includes(searchTerm.toLowerCase()) || c.contato.toLowerCase().includes(searchTerm.toLowerCase()) || (c.notes && c.notes.toLowerCase().includes(searchTerm.toLowerCase())); return ms && (statusFilter === 'all' || c.status === statusFilter); });
   const sortedClients = [...filteredClients].sort((a, b) => { if (!sortField) return 0; const av = a[sortField as keyof Client] || '', bv = b[sortField as keyof Client] || ''; return sortDirection === 'asc' ? (av < bv ? -1 : av > bv ? 1 : 0) : (av < bv ? 1 : av > bv ? -1 : 0); });
   const totalPages = Math.ceil(sortedClients.length / itemsPerPage);
   const paginatedClients = sortedClients.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
   const activeClients = clients.filter(c => c.status === 'active').length;
   const blockedClients = clients.filter(c => c.status === 'blocked').length;
   const expiredClients = clients.filter(c => c.status === 'expired').length;
@@ -197,14 +168,6 @@ export default function DashboardPage() {
   const textColor = darkMode ? 'text-white' : 'text-gray-900'; const textGray = darkMode ? 'text-gray-400' : 'text-gray-500'; const borderColor = darkMode ? 'border-gray-700' : 'border-gray-200';
   const inputBg = darkMode ? 'bg-gray-700' : 'bg-gray-50'; const inputBorder = darkMode ? 'border-gray-600' : 'border-gray-300'; const hoverBg = darkMode ? 'hover:bg-gray-700/30' : 'hover:bg-gray-50';
 
-const formatPhone = (value: string) => {
-  const numbers = value.replace(/\D/g, '');
-  if (numbers.length <= 2) return numbers.length ? `(${numbers}` : '';
-  if (numbers.length <= 7) return `(${numbers.slice(0, 2)})${numbers.slice(2)}`;
-  if (numbers.length <= 11) return `(${numbers.slice(0, 2)})${numbers.slice(2, 7)}-${numbers.slice(7)}`;
-  return `(${numbers.slice(0, 2)})${numbers.slice(2, 7)}-${numbers.slice(7, 11)}`;
-};
-
   return (
     <div className={`min-h-screen ${bgColor} flex transition-colors duration-200`}>
       {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />}
@@ -213,13 +176,10 @@ const formatPhone = (value: string) => {
           <div className="p-6">
             <div className="flex items-center gap-3 mb-8"><div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20"><Play size={20} className="text-white" fill="white" /></div><div><button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>JR STREAMING</button><p className="text-xs text-gray-400">Painel</p></div><button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white ml-auto"><X size={24} /></button></div>
             <nav className="space-y-1">
-<a href="/dashboard/configuracoes" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}>
-  <Settings size={20} />
-  <span>Configurações</span>
-</a>
               <button onClick={() => window.location.reload()} className="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 rounded-xl w-full text-left"><Users size={20} /><span className="font-medium">Clientes</span></button>
               <a href="/dashboard/estatisticas" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><BarChart3 size={20} /><span>Estatísticas</span></a>
               <a href="/dashboard/logs" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><ScrollText size={20} /><span>Logs</span></a>
+              <a href="/dashboard/configuracoes" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><Settings size={20} /><span>Configurações</span></a>
               <a href="#" onClick={e => { e.preventDefault(); backupData(); }} className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><Download size={20} /><span>Backup</span></a>
               <a href="#" onClick={e => { e.preventDefault(); restoreData(); }} className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><Upload size={20} /><span>Restaurar</span></a>
             </nav>
@@ -273,7 +233,7 @@ const formatPhone = (value: string) => {
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedClients.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded border-gray-500 bg-gray-700" /></td>
-                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{(() => { const s = getOnlineStatus(c); return s.online && <span className="inline-flex items-center ml-2 md:hidden"><div className={`w-2 h-2 rounded-full ${s.color}`}></div></span>; })()}{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
+                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{(() => { const s = getOnlineStatus(c); return s.online && <span className="inline-flex items-center ml-2 md:hidden"><div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div></span>; })()}{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
@@ -314,26 +274,9 @@ const formatPhone = (value: string) => {
           <div className={`${cardBg} rounded-2xl border ${borderColor} w-full max-w-md overflow-hidden shadow-2xl`} onClick={e => e.stopPropagation()}>
             <div className={`p-6 border-b ${borderColor} flex items-center justify-between`}><div className="flex items-center gap-3"><div className={`w-3 h-3 rounded-full ${getStatusDot(viewingClient.status)} animate-pulse`} /><h3 className={`text-lg font-semibold ${textColor}`}>{viewingClient.name}</h3></div><button onClick={() => setViewingClient(null)} className={`p-1.5 rounded-lg ${hoverBg} ${textGray} hover:text-red-400`}><XCircle size={20} /></button></div>
             <div className="p-6 space-y-4">
-              {[
-  { icon: Smartphone, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Device ID', value: viewingClient.deviceId, field: 'view-device' },
-  { icon: Monitor, color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'MAC Address', value: viewingClient.mac, field: 'view-mac' },
-  { icon: Globe, color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'URL do Servidor', value: viewingClient.serverUrl, field: 'view-url' },
-  { icon: Wifi, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Usuário / Senha', value: `${viewingClient.username || '—'} / ${viewingClient.password || '—'}`, field: '' },
-  { icon: MonitorSmartphone, color: 'text-indigo-400', bg: 'bg-indigo-500/10', label: 'User-Agent', value: viewingClient.userAgent, field: 'view-useragent' },
-  { icon: Calendar, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Validade', value: new Date(viewingClient.validade).toLocaleDateString('pt-BR'), field: '' },
-  { icon: Phone, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Contato', value: viewingClient.contato, field: 'view-contato' }
-].map((item, i) => (
-  <div key={i} className="flex items-center gap-3">
-    <div className={`p-2 rounded-lg ${item.bg}`}><item.icon size={18} className={item.color} /></div>
-    <div className="flex-1">
-      <p className={`text-xs ${textGray}`}>{item.label}</p>
-      <div className="flex items-center gap-2">
-        <p className={`text-sm ${item.field ? 'font-mono' : ''} ${textColor} ${item.label === 'URL do Servidor' || item.label === 'User-Agent' ? 'break-all' : ''}`}>{item.value || '—'}</p>
-        {item.field && item.value && <button onClick={() => copyToClipboard(item.value, item.field)} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === item.field ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}
-      </div>
-    </div>
-  </div>
-))}
+              {[{ icon: Smartphone, color: 'text-blue-400', bg: 'bg-blue-500/10', label: 'Device ID', value: viewingClient.deviceId, field: 'view-device' }, { icon: Monitor, color: 'text-purple-400', bg: 'bg-purple-500/10', label: 'MAC Address', value: viewingClient.mac, field: 'view-mac' }, { icon: Globe, color: 'text-cyan-400', bg: 'bg-cyan-500/10', label: 'URL do Servidor', value: viewingClient.serverUrl, field: 'view-url' }, { icon: Wifi, color: 'text-emerald-400', bg: 'bg-emerald-500/10', label: 'Usuário / Senha', value: `${viewingClient.username || '—'} / ${viewingClient.password || '—'}`, field: '' }, { icon: MonitorSmartphone, color: 'text-indigo-400', bg: 'bg-indigo-500/10', label: 'User-Agent', value: viewingClient.userAgent, field: 'view-useragent' }, { icon: Calendar, color: 'text-amber-400', bg: 'bg-amber-500/10', label: 'Validade', value: new Date(viewingClient.validade).toLocaleDateString('pt-BR'), field: '' }, { icon: Phone, color: 'text-rose-400', bg: 'bg-rose-500/10', label: 'Contato', value: viewingClient.contato, field: 'view-contato' }].map((item, i) => (
+                <div key={i} className="flex items-center gap-3"><div className={`p-2 rounded-lg ${item.bg}`}><item.icon size={18} className={item.color} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>{item.label}</p><div className="flex items-center gap-2"><p className={`text-sm ${item.field ? 'font-mono' : ''} ${textColor} ${item.label === 'URL do Servidor' || item.label === 'User-Agent' ? 'break-all' : ''}`}>{item.value || '—'}</p>{item.field && item.value && <button onClick={() => copyToClipboard(item.value, item.field)} className="text-gray-400 hover:text-white flex-shrink-0">{copiedField === item.field ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} />}</button>}</div></div></div>
+              ))}
               {viewingClient.notes && (<div className="flex items-center gap-3"><div className="p-2 rounded-lg bg-yellow-500/10"><StickyNote size={18} className="text-yellow-400" /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Observações</p><p className={`text-sm ${textColor}`}>{viewingClient.notes}</p></div></div>)}
               <div className="flex items-center gap-3"><div className={`p-2 rounded-lg ${getStatusColor(viewingClient.status)}`}><div className={`w-4 h-4 rounded-full ${getStatusDot(viewingClient.status)}`} /></div><div className="flex-1"><p className={`text-xs ${textGray}`}>Status</p><span className={`px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(viewingClient.status)}`}>{getStatusText(viewingClient.status)}</span></div></div>
             </div>
@@ -360,15 +303,7 @@ const formatPhone = (value: string) => {
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Usuário</label><input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Senha</label><input type="text" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} /></div></div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>User-Agent</label><input type="text" value={formData.userAgent} onChange={e => setFormData({...formData, userAgent: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="Ex: Mozilla/5.0..." /></div>
               <div className="grid grid-cols-2 gap-4"><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Status</label><select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}><option value="active">Ativo</option><option value="blocked">Bloqueado</option><option value="expired">Expirado</option></select></div><div><label className={`block text-sm font-medium ${textGray} mb-1`}>Validade</label><input type="date" value={formData.validade} onChange={e => setFormData({...formData, validade: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} required /></div></div>
-              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label>
-              <input
-  type="text"
-  value={formData.contato}
-  onChange={e => setFormData({...formData, contato: formatPhone(e.target.value)})}
-  className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`}
-  placeholder="(81)9.9999-9999"
-  maxLength={15}
-/></div>
+              <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Contato</label><input type="text" value={formData.contato} onChange={e => setFormData({...formData, contato: e.target.value})} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500`} placeholder="WhatsApp, telefone..." /></div>
               <div><label className={`block text-sm font-medium ${textGray} mb-1`}>Observações</label><textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} rows={3} className={`w-full px-3 py-2 ${inputBg} border ${inputBorder} rounded-lg ${textColor} focus:outline-none focus:border-blue-500 resize-none`} placeholder="Notas sobre o cliente..." /></div>
               <div className="flex gap-3 pt-4"><button type="button" onClick={() => setModalOpen(false)} className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">Cancelar</button><button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-lg">{editingClient ? 'Salvar' : 'Adicionar'}</button></div>
             </form>
