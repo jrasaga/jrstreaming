@@ -125,7 +125,7 @@ export default function DashboardPage() {
     loadClients();
     const t = localStorage.getItem('theme');
     if (t) setDarkMode(t === 'dark');
-    const interval = setInterval(() => loadClients(), 30000);
+    const interval = setInterval(() => loadClients(), 15000);
     return () => clearInterval(interval);
   }, []);
 
