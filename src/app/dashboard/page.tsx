@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload } from 'lucide-react';
+import { Users, UserCheck, UserX, Clock, LogOut, Menu, X, Plus, Pencil, Trash2, ToggleLeft, ToggleRight, Search, Sun, Moon, Play, XCircle, Smartphone, Monitor, Wifi, Calendar, Phone, Globe, MonitorSmartphone, Maximize2, Minimize2, Download, BarChart3, Copy, Check, ArrowUpDown, ArrowUp, ArrowDown, ScrollText, ChevronLeft, ChevronRight, ArrowLeft, ArrowRight, MessageCircle, StickyNote, Upload, Settings } from 'lucide-react';
 
 interface Client {
   id: string;
@@ -213,6 +213,10 @@ const formatPhone = (value: string) => {
           <div className="p-6">
             <div className="flex items-center gap-3 mb-8"><div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-600/20"><Play size={20} className="text-white" fill="white" /></div><div><button onClick={() => { setSidebarOpen(false); window.location.reload(); }} className={`text-sm font-bold ${textColor} hover:text-blue-400 transition-colors`}>JR STREAMING</button><p className="text-xs text-gray-400">Painel</p></div><button onClick={() => setSidebarOpen(false)} className="lg:hidden text-gray-400 hover:text-white ml-auto"><X size={24} /></button></div>
             <nav className="space-y-1">
+<a href="/dashboard/configuracoes" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}>
+  <Settings size={20} />
+  <span>Configurações</span>
+</a>
               <button onClick={() => window.location.reload()} className="flex items-center gap-3 px-4 py-3 bg-blue-600/20 text-blue-400 rounded-xl w-full text-left"><Users size={20} /><span className="font-medium">Clientes</span></button>
               <a href="/dashboard/estatisticas" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><BarChart3 size={20} /><span>Estatísticas</span></a>
               <a href="/dashboard/logs" className={`flex items-center gap-3 px-4 py-3 ${textGray} hover:text-white rounded-xl ${hoverBg} transition-colors`}><ScrollText size={20} /><span>Logs</span></a>
