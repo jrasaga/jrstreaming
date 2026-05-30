@@ -17,7 +17,6 @@ export default function ConfiguracoesPage() {
     const t = localStorage.getItem('theme');
     if (t) setDarkMode(t === 'dark');
     
-    // Carregar configurações salvas
     const saved = localStorage.getItem('update_config');
     if (saved) {
       const config = JSON.parse(saved);
@@ -30,7 +29,7 @@ export default function ConfiguracoesPage() {
   const saveConfig = () => {
     const config = { versionCode, versionName, downloadUrl };
     localStorage.setItem('update_config', JSON.stringify(config));
-    alert('Configurações salvas! Faça deploy para aplicar.');
+    alert('Configurações salvas!');
   };
 
   const bgColor = darkMode ? 'bg-gray-900' : 'bg-gray-50';
