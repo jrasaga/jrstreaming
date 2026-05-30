@@ -18,8 +18,6 @@ interface Client {
   contato: string;
   lastSeen: any;
   notes: string;
-  watching: boolean;
-  lastHeartbeat: any;
 }
 
 export default function DashboardPage() {
@@ -64,18 +62,6 @@ export default function DashboardPage() {
     navigator.clipboard.writeText(text).then(() => { setCopiedField(field); showToast('Copiado!'); setTimeout(() => setCopiedField(null), 2000); });
   };
 
-  const getOnlineStatus = (c: Client) => {
-    if (!c.lastHeartbeat) return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-    let seconds = 0;
-    if (c.lastHeartbeat._seconds) { seconds = c.lastHeartbeat._seconds; }
-    else if (c.lastHeartbeat.seconds) { seconds = c.lastHeartbeat.seconds; }
-    else { try { seconds = Math.floor(new Date(c.lastHeartbeat).getTime() / 1000); } catch(e) { return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' }; } }
-    const now = Math.floor(Date.now() / 1000);
-    const diff = now - seconds;
-    if (diff < 120) return { online: true, text: 'Online', color: 'bg-emerald-400 animate-pulse', textColor: 'text-emerald-400' };
-    return { online: false, text: 'Offline', color: 'bg-gray-500', textColor: 'text-gray-400' };
-  };
-
   const getExpiryInfo = (validade: string, status: string) => {
     if (!validade) return { text: 'Sem data', color: 'text-gray-400' };
     const today = new Date(); today.setHours(0,0,0,0); const expiry = new Date(validade + 'T00:00:00');
@@ -118,26 +104,24 @@ export default function DashboardPage() {
   };
   
   const toggleSelect = (id: string) => { const ns = new Set(selectedClients); ns.has(id) ? ns.delete(id) : ns.add(id); setSelectedClients(ns); };
-const toggleSelectAll = () => { if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); } else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); } };
-const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
-  if (selectedClients.size === 0) return showToast('Nenhum selecionado', 'error');
-  if (!confirm(`${action === 'delete' ? 'Excluir' : action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`)) return;
-  for (const id of selectedClients) {
-    try {
-      if (action === 'delete') { await fetch(`/api/clients/${id}`, { method: 'DELETE' }); addLog('deleted', clients.find(c => c.id === id)?.name || id); }
-      else { const s = action === 'activate' ? 'active' : 'blocked'; const c = clients.find(cl => cl.id === id); if (!c) continue; await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status: s }) }); addLog(s === 'active' ? 'activated' : 'blocked', c.name); }
-    } catch {}
-  }
-  showToast('Ação concluída!'); setSelectedClients(new Set()); setSelectAll(false); loadClients();
-};
+  const toggleSelectAll = () => { if (selectAll) { setSelectedClients(new Set()); setSelectAll(false); } else { setSelectedClients(new Set(paginatedClients.map(c => c.id))); setSelectAll(true); } };
+  const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
+    if (selectedClients.size === 0) return showToast('Nenhum selecionado', 'error');
+    if (!confirm(`${action === 'delete' ? 'Excluir' : action === 'activate' ? 'Ativar' : 'Bloquear'} ${selectedClients.size} clientes?`)) return;
+    for (const id of selectedClients) {
+      try {
+        if (action === 'delete') { await fetch(`/api/clients/${id}`, { method: 'DELETE' }); addLog('deleted', clients.find(c => c.id === id)?.name || id); }
+        else { const s = action === 'activate' ? 'active' : 'blocked'; const c = clients.find(cl => cl.id === id); if (!c) continue; await fetch(`/api/clients/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...c, status: s }) }); addLog(s === 'active' ? 'activated' : 'blocked', c.name); }
+      } catch {}
+    }
+    showToast('Ação concluída!'); setSelectedClients(new Set()); setSelectAll(false); loadClients();
+  };
 
   useEffect(() => {
     if (!localStorage.getItem('admin_logged')) { router.push('/login'); return; }
     loadClients();
     const t = localStorage.getItem('theme');
     if (t) setDarkMode(t === 'dark');
-    const interval = setInterval(() => loadClients(), 15000);
-    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => { localStorage.setItem('theme', darkMode ? 'dark' : 'light'); }, [darkMode]);
@@ -240,24 +224,18 @@ const bulkAction = async (action: 'activate' | 'block' | 'delete') => {
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden lg:table-cell`}>MAC</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden xl:table-cell`}>Validade</th>
                     <th onClick={() => handleSort('status')} className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} cursor-pointer hover:text-white hidden md:table-cell`}><div className="flex items-center gap-1">Status{sortField === 'status' ? (sortDirection === 'asc' ? <ArrowUp size={14} /> : <ArrowDown size={14} />) : <ArrowUpDown size={14} className="opacity-30" />}</div></th>
-                    <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray} hidden md:table-cell`}>Online</th>
                     <th className={`text-left p-3 lg:p-4 text-sm font-medium ${textGray}`}>Ações</th>
                   </tr></thead>
                   <tbody>
                     {paginatedClients.map(c => (
                       <tr key={c.id} className={`border-b ${borderColor} ${hoverBg} transition-colors cursor-pointer`} onClick={() => setViewingClient(c)}>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><input type="checkbox" checked={selectedClients.has(c.id)} onChange={() => toggleSelect(c.id)} className="w-4 h-4 rounded border-gray-500 bg-gray-700" /></td>
-                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{(() => { const s = getOnlineStatus(c); return s.online && <span className="inline-flex items-center ml-2 md:hidden"><div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div></span>; })()}{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
+                        <td className={`p-3 lg:p-4 ${textColor}`}><span className="font-medium">{c.name}</span>{c.notes && <span title={c.notes}><StickyNote size={14} className="inline ml-2 text-yellow-400" /></span>}{c.contato && <a href={`https://wa.me/55${c.contato.replace(/\D/g, '')}`} target="_blank" onClick={e => e.stopPropagation()} className="inline-flex items-center ml-2 text-green-400 hover:text-green-300"><MessageCircle size={14} /></a>}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden sm:table-cell">{c.username}</td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden md:table-cell text-xs font-mono"><div className="flex items-center gap-2"><span>{c.deviceId}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.deviceId, `device-${c.id}`); }}>{copiedField === `device-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 text-gray-300 hidden lg:table-cell text-sm font-mono"><div className="flex items-center gap-2"><span>{c.mac}</span><button onClick={e => { e.stopPropagation(); copyToClipboard(c.mac, `mac-${c.id}`); }}>{copiedField === `mac-${c.id}` ? <Check size={14} className="text-emerald-400" /> : <Copy size={14} className="text-gray-400 hover:text-white" />}</button></div></td>
                         <td className="p-3 lg:p-4 hidden xl:table-cell">{(() => { const info = getExpiryInfo(c.validade, c.status); return <div><span className={info.color}>{info.text}</span><p className="text-xs text-gray-500">{new Date(c.validade).toLocaleDateString('pt-BR')}</p></div>; })()}</td>
                         <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}><span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(c.status)}`}>{getStatusText(c.status)}</span></td>
-                        <td className="p-3 lg:p-4 hidden md:table-cell" onClick={e => e.stopPropagation()}>
-                          <div className="flex items-center gap-2">
-                            {(() => { const s = getOnlineStatus(c); return <><div className={`w-2 h-2 rounded-full ${s.color}`}></div><span className={`text-xs font-medium ${s.textColor}`}>{s.text}</span></>; })()}
-                          </div>
-                        </td>
                         <td className="p-3 lg:p-4" onClick={e => e.stopPropagation()}><div className="flex gap-1 lg:gap-2"><button onClick={() => toggleStatus(c)} className={`p-1.5 lg:p-2 rounded-lg ${c.status === 'active' ? 'text-emerald-400 hover:bg-emerald-400/10' : 'text-red-400 hover:bg-red-400/10'}`}>{c.status === 'active' ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}</button><button onClick={() => openEditModal(c)} className="p-1.5 lg:p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg"><Pencil size={16} /></button><button onClick={e => { e.stopPropagation(); handleDelete(c); }} className="p-1.5 lg:p-2 text-red-400 hover:bg-red-400/10 rounded-lg"><Trash2 size={16} /></button></div></td>
                       </tr>
                     ))}
